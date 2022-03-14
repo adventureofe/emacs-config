@@ -1,0 +1,360 @@
+#+TITLE: frogmacs
+#+AUTHOR: theadventureofe
+#+EMAIL: theadventureofe@gmail.com
+#+STARTUP: overview
+-*- coding: utf-8 -*-
+
+* PACKAGE_MANAGEMENT
+** MELPA
+   We need melpa to install packages
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (require 'package)
+
+  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+			   ("org" . "https://orgmode.org/elpa/")
+			   ("elpa" . "https://elpa.gnu.org/packages/")))
+
+  (package-initialize)
+  (unless package-archive-contents
+    (package-refresh-contents))
+#+END_SRC
+** USE_PACKAGE
+   use-package allows us to manage packages much easier
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (unless (package-installed-p 'use-package)
+    (package-refresh-contents)
+    (package-install 'use-package))
+
+  (require 'use-package)
+  (require 'use-package-ensure)
+  (setq use-package-always-ensure t)
+#+END_SRC
+* VISUALS
+  these sections handle how emacs looks
+** DIMINISH
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package diminish)
+#+END_SRC
+** DISABLE_TOOLBARS
+   disable annyoing and mostly useless toolbars
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (setq inhibit-startup-message t)
+  (setq visible-bell t)
+
+  (scroll-bar-mode -1)
+  (tool-bar-mode -1)
+  (tooltip-mode -1)  
+  (menu-bar-mode -1)
+  (set-window-scroll-bars (minibuffer-window) nil nil)
+#+END_SRC
+** LINE_NUMBERS
+   line numbers are always useful
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (column-number-mode 0)
+  (global-display-line-numbers-mode t)
+
+  ;; Disable line numbers for some modes
+  (dolist (mode '(org-mode-hook
+ term-mode-hook
+ shell-mode-hook
+ treemacs-mode-hook
+ eshell-mode-hook))
+    (add-hook mode (lambda () (display-line-numbers-mode 0))))
+#+END_SRC
+** DOOM_STUFF
+   doom visuals are pretty noice.
+*** DOOM-MODELINE
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package doom-modeline
+    :ensure t
+    :init (doom-modeline-mode  1)
+    :custom (
+    (doom-modeline-height 10)
+    (doom-modeline-buffer-encoding nil)
+    (doom-modeline-window-width-limit fill-column)
+    ))
+
+;; default modeline stuff I don't want
+(setq display-time-default-load-average nil)
+
+#+END_SRC
+*** ALL-THE-ICONS
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package all-the-icons)
+#+END_SRC
+** NO_BLINKY_CURSOR
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+ (blink-cursor-mode 0)
+#+END_SRC
+** THEME
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+    (use-package autothemer
+      :ensure t)
+
+  (load-theme 'frog t)
+#+END_SRC
+** FONT
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (set-face-attribute 'default nil :font "liberation mono" :height 110)
+#+END_SRC
+** FANCY_LAMBDAS
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (global-prettify-symbols-mode t)
+#+END_SRC
+** DISPLAY_BATTERY
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(display-battery-mode 1)
+#+END_SRC
+* FUNCTIONALITY
+these sectons handle how emacs functions
+** DISABLE_BACKUPS
+stop emacs littering everywhere. Save often
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (setq make-backup-files nil)
+#+END_SRC
+** DEFAULT_DIRECTORY
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(setq default-directory "~/.emacs.d/")
+#+END_SRC
+** UTF-8_CODECS
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(prefer-coding-system       'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-language-environment   'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(setq locale-coding-system  'utf-8)
+#+END_SRC
+** DISABLE_LOCKFILES(FOR_REACT)
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(setq create-lockfiles nil) 
+#+END_SRC
+** CONVSERVATIVE_SCROLLING
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (setq scroll-conservatively 100)
+#+END_SRC
+* SNIPPETS
+** YASNIPPET
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package yasnippet)
+  (yas-global-mode 1)
+#+END_SRC
+* ORG
+** ORG_MODE
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package org)
+#+END_SRC
+** ORG_BULLETS
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package org-bullets
+    :ensure t
+    :init
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+#+END_SRC
+** ORG_INDENT
+this indenting is super annoying
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(org-indent-mode nil)
+(electric-indent-mode -1)
+(setq org-src-preserve-indentation t)
+#+END_SRC
+** ORG_DRILL
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package org-drill)
+#+END_SRC
+* EVIL
+** EVIL_MODE
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+    (use-package evil
+      :init
+      (setq evil-want-abbrev-expand-on-insert-exit nil
+            evil-want-keybinding nil)
+
+      :config
+      (evil-mode 1)
+    (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+  ;; Use visual line motions even outside of visual-line-mode buffers
+    (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+    (evil-global-set-key 'motion "k" 'evil-previous-visual-line))
+
+    (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+#+END_SRC
+** EVIL_COLLECTION
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package evil-collection
+  :after evil
+  :config
+  (setq evil-collection-mode-list
+        '(ag dired magit mu4e which-key))
+  (evil-collection-init))
+#+END_SRC
+** EVIL_SURROUND
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package evil-surround
+  :config
+  (global-evil-surround-mode 1))
+#+END_SRC
+** EVIL_ORG
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package evil-org
+  :after org
+  :config
+  (add-hook 'org-mode-hook 'evil-org-mode)
+  (add-hook 'evil-org-mode-hook
+            (lambda () (evil-org-set-key-theme)))
+  (require 'evil-org-agenda)
+  (evil-org-agenda-set-keys))
+#+END_SRC
+* MODES
+** GENERAL_INDENTING
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+#+END_SRC
+** C#
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package csharp-mode)
+#+END_SRC
+** CLOJURE
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package clojure-mode)
+  (use-package cider)
+#+END_SRC
+** HASKELL
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package haskell-mode)
+#+END_SRC
+** IRONY
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package irony
+:ensure t
+:config
+(add-hook 'c++-mode-hook 'irony-mode)
+(add-hook 'c-mode-hook 'irony-mode)
+(add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options))
+#+END_SRC
+** COMMON_LISP
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package slime)
+(setq inferior-lisp-program "sbcl")
+#+END_SRC
+* COMPLETION
+** IVY
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package ivy
+:config
+(ivy-mode 1))
+#+END_SRC
+** COUNSEL
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package counsel
+:bind 
+("C-x b" . 'counsel-switch-buffer)
+("C-x C-f" . 'counsel-find-file))
+#+END_SRC
+** COMPANY
+   #+BEGIN_SRC emacs-lisp :tangle ./init.el
+   (use-package company
+   :ensure t
+   :config
+   (setq company-idle-delay 0)
+   (setq company-minimum-prefix-length 3))
+
+   (with-eval-after-load 'company
+   (define-key company-active-map (kbd "C-j") #'company-select-next)
+   (define-key company-active-map (kbd "C-k") #'company-select-previous))
+   #+END_SRC
+** COMPANY_IRONY
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package company-irony
+:ensure t
+:config
+(require 'company)
+(add-to-list 'company-backends 'company-irony))
+#+END_SRC
+
+** COMPANY_HOOKS
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(with-eval-after-load 'company
+(add-hook 'after-init-hook 'global-company-mode))
+#+END_SRC
+** IVY_RICH_ICONS
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package all-the-icons-ivy-rich
+  :init
+(all-the-icons-ivy-rich-mode 1))
+#+END_SRC
+** IVY_RICH
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package ivy-rich
+  :after ivy
+  :init
+  (ivy-rich-mode 1))
+#+END_SRC
+* MY_FUNCTIONS
+you may have to use (revert-buffer-with-coding-system 'utf-8)
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+
+   ;;Navigation functions (C-; C-n prefix)
+   (global-set-key (kbd "C-; C-n c")(lambda()(interactive)(find-file "~/.emacs.d/frogmacs.org")))
+   (global-set-key (kbd "C-; C-n h")(lambda()(interactive)(find-file "~/private/org/home.org")))
+   (global-set-key (kbd "C-; C-n b")(lambda()(interactive)(find-file "~/private/org/books.org")))
+   (global-set-key (kbd "C-; C-n w")(lambda()(interactive)(find-file "~/private/org/words.org")))
+   (global-set-key (kbd "C-; C-n l")(lambda()(interactive)(find-file "~/private/org/language.org")))
+   (global-set-key (kbd "C-; C-n m")(lambda()(interactive)(find-file "~/private/org/math.org")))
+
+   ;;fada functions (C-; C-f prefix)
+   ;;i'll also include additional letters
+   ;; (Yasnippet doesn't seem to vibe well with pressing tab inside an org table)
+   (global-set-key (kbd "C-; C-f a")(lambda()(interactive)(insert "á")))
+   (global-set-key (kbd "C-; C-f e")(lambda()(interactive)(insert "é")))
+   (global-set-key (kbd "C-; C-f i")(lambda()(interactive)(insert "í")))
+   (global-set-key (kbd "C-; C-f o")(lambda()(interactive)(insert "ó")))
+   (global-set-key (kbd "C-; C-f u")(lambda()(interactive)(insert "ú")))
+
+   (global-set-key (kbd "C-; C-f A")(lambda()(interactive)(insert "Á")))
+   (global-set-key (kbd "C-; C-f E")(lambda()(interactive)(insert "É")))
+   (global-set-key (kbd "C-; C-f I")(lambda()(interactive)(insert "Í")))
+   (global-set-key (kbd "C-; C-f O")(lambda()(interactive)(insert "Ó")))
+   (global-set-key (kbd "C-; C-f U")(lambda()(interactive)(insert "Ú")))
+
+
+   ;;japanese functions
+   (global-set-key (kbd "C-; C-j a")(lambda()(interactive)(insert "あ")))
+   (global-set-key (kbd "C-; C-j i")(lambda()(interactive)(insert "い")))
+   (global-set-key (kbd "C-; C-j u")(lambda()(interactive)(insert "う")))
+   (global-set-key (kbd "C-; C-j e")(lambda()(interactive)(insert "え")))
+   (global-set-key (kbd "C-; C-j o")(lambda()(interactive)(insert "お")))
+
+   (global-set-key (kbd "C-; C-j k a")(lambda()(interactive)(insert "か")))
+   (global-set-key (kbd "C-; C-j k i")(lambda()(interactive)(insert "き")))
+   (global-set-key (kbd "C-; C-j k u")(lambda()(interactive)(insert "く")))
+   (global-set-key (kbd "C-; C-j k e")(lambda()(interactive)(insert "け")))
+   (global-set-key (kbd "C-; C-j k o")(lambda()(interactive)(insert "こ")))
+
+   (global-set-key (kbd "C-; C-j s a")(lambda()(interactive)(insert "さ")))
+   (global-set-key (kbd "C-; C-j s i")(lambda()(interactive)(insert "し")))
+   (global-set-key (kbd "C-; C-j s h")(lambda()(interactive)(insert "し")))
+   (global-set-key (kbd "C-; C-j s u")(lambda()(interactive)(insert "す")))
+   (global-set-key (kbd "C-; C-j s e")(lambda()(interactive)(insert "せ")))
+   (global-set-key (kbd "C-; C-j s o")(lambda()(interactive)(insert "そ")))
+
+   (global-set-key (kbd "C-; C-f N")(lambda()(interactive)(insert "Ñ")))
+   (global-set-key (kbd "C-; C-f n")(lambda()(interactive)(insert "ñ")))
+   (global-set-key (kbd "C-; C-f b")(lambda()(interactive)(insert "ß")))
+   (global-set-key (kbd "C-; C-f B")(lambda()(interactive)(insert "ß")))
+
+   ;; useful functions with hyper key
+   (global-set-key (kbd "H-t") 'org-babel-tangle)
+   (global-set-key (kbd "H-e") 'eshell)
+   (global-set-key (kbd "H-u") 'upcase-word)
+   (global-set-key (kbd "H-w") 'eval-last-sexp)
+#+END_SRC
+* GO_HOME
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(find-file "~/private/org/home.org")
+#+END_SRC
+
+
+

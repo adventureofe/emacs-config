@@ -143,7 +143,28 @@ stop emacs littering everywhere. Save often
 * ORG
 ** ORG_MODE
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (use-package org)
+  (use-package org
+  :pin org
+  :commands (org-capture org-agenda)
+  :config
+
+ (setq org-ellipsis " ▾")
+
+  (setq org-agenda-start-with-log-mode t)
+  (setq org-log-done 'time)
+  (setq org-log-into-drawer t)
+
+  (setq org-agenda-files
+        '("~/private/org/tasks.org"
+          "~/private/org/habits.org"))
+
+  (require 'org-habit)
+  (add-to-list 'org-modules 'org-habit)
+  (setq org-habit-graph-column 60)
+
+  (define-key global-map (kbd "C-c j")
+    (lambda () (interactive) (org-capture nil "jj")))
+)
 #+END_SRC
 ** ORG_BULLETS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -294,8 +315,8 @@ this indenting is super annoying
 #+END_SRC
 * MY_FUNCTIONS
 you may have to use (revert-buffer-with-coding-system 'utf-8)
+** NAVIGATION
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-
    ;;Navigation functions (C-; C-n prefix)
    (global-set-key (kbd "C-; C-n c")(lambda()(interactive)(find-file "~/.emacs.d/frogmacs.org")))
    (global-set-key (kbd "C-; C-n h")(lambda()(interactive)(find-file "~/private/org/home.org")))
@@ -303,7 +324,11 @@ you may have to use (revert-buffer-with-coding-system 'utf-8)
    (global-set-key (kbd "C-; C-n w")(lambda()(interactive)(find-file "~/private/org/words.org")))
    (global-set-key (kbd "C-; C-n l")(lambda()(interactive)(find-file "~/private/org/language.org")))
    (global-set-key (kbd "C-; C-n m")(lambda()(interactive)(find-file "~/private/org/math.org")))
-
+   (global-set-key (kbd "C-; C-n t")(lambda()(interactive)(find-file "~/private/org/tasks.org")))
+   (global-set-key (kbd "C-; C-n d")(lambda()(interactive)(find-file "~/private/org/drills.org")))
+#+END_SRC
+** FADA_LETTERS
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
    ;;fada functions (C-; C-f prefix)
    ;;i'll also include additional letters
    ;; (Yasnippet doesn't seem to vibe well with pressing tab inside an org table)
@@ -318,8 +343,9 @@ you may have to use (revert-buffer-with-coding-system 'utf-8)
    (global-set-key (kbd "C-; C-f I")(lambda()(interactive)(insert "Í")))
    (global-set-key (kbd "C-; C-f O")(lambda()(interactive)(insert "Ó")))
    (global-set-key (kbd "C-; C-f U")(lambda()(interactive)(insert "Ú")))
-
-
+#+END_SRC
+** JAPANESE_LETTERS
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
    ;;japanese functions
    (global-set-key (kbd "C-; C-j a")(lambda()(interactive)(insert "あ")))
    (global-set-key (kbd "C-; C-j i")(lambda()(interactive)(insert "い")))
@@ -344,12 +370,152 @@ you may have to use (revert-buffer-with-coding-system 'utf-8)
    (global-set-key (kbd "C-; C-f n")(lambda()(interactive)(insert "ñ")))
    (global-set-key (kbd "C-; C-f b")(lambda()(interactive)(insert "ß")))
    (global-set-key (kbd "C-; C-f B")(lambda()(interactive)(insert "ß")))
+#+END_SRC
+** PROJECT_GENERATION
+*** C
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(defun c-gen () 
+    (interactive)
+     ;; get file name
+    (setq project-name (read-string "enter project name: "))
 
+    ;; make directories
+    (make-directory project-name)
+    (make-directory (concat project-name "/src"))
+    (make-directory (concat project-name "/headers"))
+
+    ;; generate readme
+    (find-file (concat project-name "/readme.org"))
+    (insert  "* " project-name "\n")
+    (insert "By theadventureofe(John Gormley)\n")
+    (insert "project description\n")
+    (insert "the_adventure_of_e λ")
+    (save-buffer)
+    (kill-buffer)
+
+    ;; generate main.c
+    (find-file (concat project-name "/main.c"))
+
+    (insert "/*\n    " project-name "\n")
+    (insert "    By theadventureofe(John Gormley)\n")
+    (insert "    project description\n")
+    (insert "    the_adventure_of_e λ*/\n\n")
+
+    (insert "#include <stdlib.h>\n")
+    (insert "#include <stdio.h>\n\n")
+
+    (insert "// print all included cmd args (removes compiler warning)\n")
+    (insert "void arg_print(int argc, char** argv)\n")
+    (insert "{\n")
+    (insert "    for(int i = 1; i < argc; i++)\n")
+    (insert "        printf(\"arg[%d]: %s\", i, argv[i]);\n")
+    (insert "}\n\n")
+
+    (insert "int main (int argc, char** argv)\n")
+    (insert "{\n")
+    (insert "    arg_print(argc, argv);\n")
+    (insert "    printf(\"Hello, World!\\n\");\n")
+    (insert "    return EXIT_SUCCESS;\n")
+    (insert "}")
+    
+    (save-buffer)
+    (kill-buffer)
+
+    ;; generate makefile
+    (find-file (concat project-name "/Makefile"))
+    (insert "CC = clang\n")
+    (insert "CFLAGS = -Wall -Wextra -pedantic\n")
+    (insert "EXEC = " project-name "\n\n")
+
+    (insert "output: main.o\n")
+    (insert "\t$(CC) $(CFLAGS) main.o -o $(EXEC)\n\n")
+
+    (insert "main.o: main.c\n")
+    (insert "\t$(CC) -c $(CFLAGS) main.c\n\n")
+    
+    (insert "clean:\n")
+    (insert "\trm *.o " project-name)
+    (save-buffer)
+    (kill-buffer)
+)
+#+END_SRC
+*** C++
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(defun cpp-gen () 
+    (interactive)
+     ;; get file name
+    (setq project-name (read-string "enter project name: "))
+
+    ;; make directories
+    (make-directory project-name)
+    (make-directory (concat project-name "/src"))
+    (make-directory (concat project-name "/headers"))
+
+    ;; generate readme
+    (find-file (concat project-name "/readme.org"))
+    (insert  "* " project-name "\n")
+    (insert "By theadventureofe(John Gormley)\n")
+    (insert "project description\n")
+    (insert "the_adventure_of_e λ")
+    (save-buffer)
+    (kill-buffer)
+
+    ;; generate main.c
+    (find-file (concat project-name "/main.cpp"))
+
+    (insert "/*\n    " project-name "\n")
+    (insert "    By theadventureofe(John Gormley)\n")
+    (insert "    project description\n")
+    (insert "    the_adventure_of_e λ*/\n\n")
+
+    (insert "#include <iostream>\n")
+    (insert "#include <vector>\n")
+    (insert "#include <memory>\n")
+    (insert "#include <map>\n\n")
+
+    (insert "// print all included cmd args (removes compiler warning)\n")
+    (insert "void arg_print(int argc, char** argv)\n")
+    (insert "{\n")
+    (insert "    for(int i = 1; i < argc; i++)\n")
+    (insert "        printf(\"arg[%d]: %s\", i, argv[i]);\n")
+    (insert "}\n\n")
+
+    (insert "int main (int argc, char** argv)\n")
+    (insert "{\n")
+    (insert "    arg_print(argc, argv);\n")
+    (insert "    std::cout << \"Hello, World!\\n\";\n")
+    (insert "    return 0;\n")
+    (insert "}")
+    
+    (save-buffer)
+    (kill-buffer)
+
+    ;; generate makefile
+    (find-file (concat project-name "/Makefile"))
+    (insert "CC = clang++\n")
+    (insert "CFLAGS = -Wall -Wextra -pedantic\n")
+    (insert "EXEC = " project-name "\n\n")
+
+    (insert "output: main.o\n")
+    (insert "\t$(CC) $(CFLAGS) main.o -o $(EXEC)\n\n")
+
+    (insert "main.o: main.cpp\n")
+    (insert "\t$(CC) -c $(CFLAGS) main.cpp\n\n")
+    
+    (insert "clean:\n")
+    (insert "\trm *.o " project-name)
+    (save-buffer)
+    (kill-buffer)
+)
+#+END_SRC
+** MISC_HYPER_FUNCTIONS
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
    ;; useful functions with hyper key
    (global-set-key (kbd "H-t") 'org-babel-tangle)
    (global-set-key (kbd "H-e") 'eshell)
    (global-set-key (kbd "H-u") 'upcase-word)
    (global-set-key (kbd "H-w") 'eval-last-sexp)
+   (global-set-key (kbd "H-p") 'org-latex-preview)
 #+END_SRC
 * GO_HOME
 #+BEGIN_SRC emacs-lisp :tangle ./init.el

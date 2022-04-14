@@ -105,6 +105,42 @@
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (display-battery-mode 1)
 #+END_SRC
+* EXWM
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package exwm
+:config
+(setq exwm-worksapce-number 5)
+
+(start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/Xmodmap")
+
+(require 'exwm-randr)
+(exwm-randr-enable)
+(start-process-shell-command "xrandr" nil "xrandr --output Virtual-1 --primary --mode 1920x1080 --pos 0x0 --rotate normal")
+
+(setq exwm-input-prefix-keys
+'(?\C-x
+?\C-u
+?\C-h
+?\M-x
+?\M-`
+?\M-&
+?\M-:
+?\C-\M-j
+?\C-\ ))
+
+(define-key exwm-mode-map [?\C-q] 'exwm-input-send-next-key)
+
+(setq exwm-input-global-keys
+`(
+([?\s-r] . exwm-reset)
+
+([?\s-&] . (lambda (command)
+(interactive (list (read-shell-command "$ ")))
+(start-process-shell-command command nil command)))))
+
+(exwm-enable))
+
+#+END_SRC
 * FUNCTIONALITY
 these sectons handle how emacs functions
 ** DISABLE_BACKUPS

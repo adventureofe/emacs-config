@@ -2,6 +2,7 @@
 #+AUTHOR: theadventureofe
 #+EMAIL: theadventureofe@gmail.com
 #+STARTUP: overview
+-*- coding: utf-8 -*-
 * PACKAGE_MANAGEMENT
 ** MELPA
    We need melpa to install packages
@@ -11,7 +12,7 @@
   (setq package-archives '(("melpa" . "https://melpa.org/packages/")
 			   ("org" . "https://orgmode.org/elpa/")
 			   ("elpa" . "https://elpa.gnu.org/packages/")))
-  
+
   (package-initialize)
   (unless package-archive-contents
     (package-refresh-contents))
@@ -27,164 +28,23 @@
   (require 'use-package-ensure)
   (setq use-package-always-ensure t)
 #+END_SRC
-* FUNCTIONALITY
-** PREFER_UTF_8
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (set-charset-priority 'unicode)
-  (prefer-coding-system       'utf-8)
-  (set-default-coding-systems 'utf-8)
-  (set-keyboard-coding-system 'utf-8)
-  (set-language-environment   'utf-8)
-  (set-terminal-coding-system 'utf-8)
-  (set-selection-coding-system 'utf-8)
-  (setq locale-coding-system  'utf-8)
-  (setq default-process-coding-system '(utf-8-unix . utf-8-unix))
-;; Treat clipboard input as UTF-8 string first; compound text next, etc.
-(setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING))
-#+END_SRC
-** DISABLE_BACKUPS
-stop emacs littering everywhere. Save often
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (setq make-backup-files nil)
-#+END_SRC
-** DISABLE_LOCKFILES(FOR_REACT)
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(setq create-lockfiles nil) 
-#+END_SRC
-** CONVSERVATIVE_SCROLLING
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (setq scroll-conservatively 100)
-#+END_SRC
-** AVOID_CLOSING_EMACS
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(global-unset-key (kbd "C-x C-c"))
-#+END_SRC
-** GENERAL_INDENTING
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
-#+END_SRC
-* EXWM
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (defun efs/exwm-update-class ()
-    (exwm-workspace-rename-buffer exwm-class-name))
-
-    (use-package exwm
-      :config
-      (setq exwm-worksapce-number 3)
-
-      (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/Xmodmap")
-
-      (require 'exwm-randr)
-      (exwm-randr-enable)
-      (start-process-shell-command "xrandr" nil "xrandr --output Virtual-1 --primary --mode 1920x1080 --pos 0x0 --rotate normal")
-
-      (setq exwm-input-prefix-keys
-	    '(?\C-x
-	      ?\C-u
-	      ?\C-h
-	      ?\M-x
-	      ?\M-`
-	      ?\M-&
-	      ?\M-:
-	      ?\C-\M-j
-	      ?\C-\ ))
-
-      (define-key exwm-mode-map [?\C-q] 'exwm-input-send-next-key)
-
-      (setq exwm-input-global-keys
-	    `(
-	      ([?\s-r] . exwm-reset)
-
-	      ([?\s-&] . (lambda (command)
-			   (interactive (list (read-shell-command "$ ")))
-			   (start-process-shell-command command nil command)))))
-
-      (exwm-enable))
-#+END_SRC
 * VISUALS
-** DISABLE_GUI_ELEMENTS
+  these sections handle how emacs looks
+** DIMINISH
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package diminish)
+#+END_SRC
+** DISABLE_TOOLBARS
+   disable annyoing and mostly useless toolbars
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
   (setq inhibit-startup-message t)
   (setq visible-bell t)
 
   (scroll-bar-mode -1)
   (tool-bar-mode -1)
-  (tooltip-mode -1)
+  (tooltip-mode -1)  
   (menu-bar-mode -1)
   (set-window-scroll-bars (minibuffer-window) nil nil)
-#+END_SRC
-** FONT
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (set-face-attribute 'default nil :font "iosevka" :height 120)
-#+END_SRC
-** THEME
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-    (use-package autothemer
-      :ensure t)
-
-  (load-theme 'frog t)
-#+END_SRC
-** MODELINE
-*** DIMINISH
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (use-package diminish)
-#+END_SRC
-*** DOOM-MODELINE
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (use-package doom-modeline
-    :ensure t
-    :init (doom-modeline-mode  1)
-    :custom (
-    (doom-modeline-height 10)
-    (doom-modeline-buffer-encoding nil)
-    (doom-modeline-window-width-limit fill-column)
-    ))
-
-;; default modeline stuff I don't want
-(setq display-time-default-load-average nil)
-#+END_SRC
-*** ALL-THE-ICONS
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (use-package all-the-icons)
-#+END_SRC
-*** DISPLAY_BATTERY
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(display-battery-mode 1)
-#+END_SRC
-** TEXT
-*** LINE_NUMBERS
-   line numbers are always useful
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (column-number-mode 0)
-  (global-display-line-numbers-mode t)
-
-  ;; Disable line numbers for some modes
-  (dolist (mode '(org-mode-hook
- term-mode-hook
- shell-mode-hook
- treemacs-mode-hook
- eshell-mode-hook))
-    (add-hook mode (lambda () (display-line-numbers-mode 0))))
-#+END_SRC
-*** NO_BLINKY_CURSOR
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
- (blink-cursor-mode 0)
-#+END_SRC
-*** FANCY_LAMBDAS
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (global-prettify-symbols-mode t)
-#+END_SRC
-*** TRAILING_WHITE_SPACE
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(setq-default show-trailing-whitespace t)
-#+END_SRC
-*** EMOJI_SUPPORT
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(use-package unicode-fonts
-  :ensure t
-  :config
-  (unicode-fonts-setup))
 #+END_SRC
 ** LINE_NUMBERS
    line numbers are always useful
@@ -200,18 +60,54 @@ stop emacs littering everywhere. Save often
  eshell-mode-hook))
     (add-hook mode (lambda () (display-line-numbers-mode 0))))
 #+END_SRC
+** DOOM_STUFF
+   doom visuals are pretty noice.
+*** DOOM-MODELINE
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package doom-modeline
+    :ensure t
+    :init (doom-modeline-mode  1)
+    :custom (
+    (doom-modeline-height 10)
+    (doom-modeline-buffer-encoding nil)
+    (doom-modeline-window-width-limit fill-column)
+    ))
 
+;; default modeline stuff I don't want
+(setq display-time-default-load-average nil)
 
+#+END_SRC
+*** ALL-THE-ICONS
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package all-the-icons)
+#+END_SRC
 ** NO_BLINKY_CURSOR
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
  (blink-cursor-mode 0)
+#+END_SRC
+** THEME
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+    (use-package autothemer
+      :ensure t)
+
+  (load-theme 'frog t)
+#+END_SRC
+** FONT
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (set-face-attribute 'default nil :font "iosevka" :height 120)
 #+END_SRC
 ** FANCY_LAMBDAS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
   (global-prettify-symbols-mode t)
 #+END_SRC
-
-
+** DISPLAY_BATTERY
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(display-battery-mode 1)
+#+END_SRC
+** TRAILING_WHITE_SPACE
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(setq-default show-trailing-whitespace t)
+#+END_SRC
 ** EMOJI_SUPPORT
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package unicode-fonts
@@ -219,16 +115,81 @@ stop emacs littering everywhere. Save often
   :config
   (unicode-fonts-setup))
 #+END_SRC
+* EXWM
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package exwm
+:config
+(setq exwm-worksapce-number 5)
 
-* EMACS_SERVER
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (server-start)
+(start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/Xmodmap")
+
+(require 'exwm-randr)
+(exwm-randr-enable)
+(start-process-shell-command "xrandr" nil "xrandr --output Virtual-1 --primary --mode 1920x1080 --pos 0x0 --rotate normal")
+
+(setq exwm-input-prefix-keys
+'(?\C-x
+?\C-u
+?\C-h
+?\M-x
+?\M-`
+?\M-&
+?\M-:
+?\C-\M-j
+?\C-\ ))
+
+(define-key exwm-mode-map [?\C-q] 'exwm-input-send-next-key)
+
+(setq exwm-input-global-keys
+`(
+([?\s-r] . exwm-reset)
+
+([?\s-&] . (lambda (command)
+(interactive (list (read-shell-command "$ ")))
+(start-process-shell-command command nil command)))))
+
+(exwm-enable))
+
 #+END_SRC
-* COMPANY
+* FUNCTIONALITY
+these sectons handle how emacs functions
+** DISABLE_BACKUPS
+stop emacs littering everywhere. Save often
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-(use-package company :ensure t :pin melpa)
+  (setq make-backup-files nil)
 #+END_SRC
-* YASNIPPET
+** DEFAULT_DIRECTORY
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(setq default-directory "~/.emacs.d/")
+#+END_SRC
+** UTF-8_CODECS
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(prefer-coding-system       'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-language-environment   'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(setq locale-coding-system  'utf-8)
+
+(setenv "LANG" "en_GB.UTF-8")
+(setenv "LC_ALL" "en_GB.UTF-8")
+(setenv "LC_CTYPE" "en_GB.UTF-8")
+#+END_SRC
+** DISABLE_LOCKFILES(FOR_REACT)
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(setq create-lockfiles nil) 
+#+END_SRC
+** CONVSERVATIVE_SCROLLING
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (setq scroll-conservatively 100)
+#+END_SRC
+** AVOID_CLOSING_EMACS
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(global-unset-key (kbd "C-x C-c"))
+#+END_SRC
+* SNIPPETS
+** YASNIPPET
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
   (use-package yasnippet)
   (yas-global-mode 1)
@@ -277,7 +238,6 @@ this indenting is super annoying
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package org-drill)
 #+END_SRC
-
 * EVIL
 ** EVIL_MODE
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -331,27 +291,241 @@ this indenting is super annoying
   (require 'evil-org-agenda)
   (evil-org-agenda-set-keys))
 #+END_SRC
-* WHICH KEY
+* LATEX
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-(use-package which-key
-    :config
-    (which-key-mode))
+(use-package auctex
+  :ensure t
+  :defer t)
+
+(use-package latex-preview-pane
+  :ensure t
+  :defer t)
 #+END_SRC
-* IVY
+* LSP
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package lsp-mode
+  :ensure t
+  :defer t
+  :init
+  (setq lsp-prefer-capf t)
+  ;; 10Mb LSP consume large payloads so a higher value is required
+  (setq read-process-output-max (* 10 1024 1024)))
+#+END_SRC
+* MODES
+** C
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(reformatter-define c-format
+  :program "clang-format")
+
+(with-eval-after-load 'cc-mode
+  (define-key c-mode-map (kbd "C-c C-f") 'c-format-buffer))
+#+END_SRC
+** GENERAL_INDENTING
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+#+END_SRC
+** C#
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package csharp-mode)
+#+END_SRC
+** CLOJURE
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+  (use-package clojure-mode)
+
+(defun my/clj-format-code ()
+  "Format clojure code using cider commands."
+  (interactive)
+  (if (region-active-p)
+      (cider-format-region (region-beginning) (region-end))
+    (cider-format-buffer)))
+
+(defun my/cider-repl-reset ()
+  "Call (reset) in the active repl and return to the position where was called."
+  (interactive)
+  (save-window-excursion
+    (cider-insert-in-repl "(reset)" t)))
+
+(use-package cider
+  :ensure t
+  :bind (:map cider-mode-map
+              ("C-c C-f" . my/clj-format-code)
+              ("C-c C-r" . my/cider-repl-reset)))
+
+(evil-leader/set-key-for-mode 'clojure-mode "d" 'cider-find-var)
+
+(with-eval-after-load 'evil
+  (evil-set-initial-state 'cider-stacktrace-mode 'emacs))
+
+(use-package clj-refactor
+  :ensure t
+  :after cider
+  :bind (:map clojure-mode-map
+              ("C-c C-a" . cljr-add-project-dependency))
+  :hook (clojure . clj-refactor))
+#+END_SRC
+** HASKELL
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package haskell-mode)
+#+END_SRC
+** IRONY
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package irony
+:ensure t
+:config
+(add-hook 'c++-mode-hook 'irony-mode)
+(add-hook 'c-mode-hook 'irony-mode)
+(add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options))
+#+END_SRC
+** COMMON_LISP
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package slime)
+(setq inferior-lisp-program "sbcl")
+#+END_SRC
+** WEB_MODE
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(defun my/web-mode-hook ()
+  (emmet-mode)
+  (rainbow-delimiters-mode-disable)
+  (autopair-mode -1))
+
+(use-package web-mode
+  :ensure t
+  :custom
+  (web-mode-enable-current-element-highlight t)
+  (web-mode-enable-current-column-highlight t)
+  :mode (("\\.html\\'" . web-mode)
+         ("\\.html.eex\\'" . web-mode)
+         ("\\.html.leex\\'" . web-mode)
+         ("\\.html.heex\\'" . web-mode)
+         ("\\.hbs\\'" . web-mode))
+  :config
+  (add-hook 'web-mode-hook 'my/web-mode-hook))
+#+END_SRC
+** EMMET_MODE
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package emmet-mode
+  :ensure t)
+#+END_SRC
+** SASS_MODE
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package sass-mode
+  :ensure t
+  :defer t)
+#+END_SRC
+** RAINBOW_MODE
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package rainbow-mode
+  :ensure t
+  :hook
+  ((css-mode . rainbow-mode)
+   (sass-mode . rainbow-mode)
+   (scss-mode . rainbow-mode)))
+#+END_SRC
+** JSON_MODE
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package json-mode
+  :ensure t
+  :defer t)
+#+END_SRC
+** PYTHON
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+reformatter-define python-black-format
+  :program "black"
+  :args '("-")
+  :group 'python)
+
+(reformatter-define python-isort-format
+  :program "isort"
+  :args '("-")
+  :group 'python)
+
+(use-package elpy
+  :ensure t
+  :hook (python-mode . elpy-enable)
+  :custom
+  (elpy-shell-echo-input . nil)
+  :config
+  (evil-leader/set-key-for-mode 'python-mode "d" 'elpy-goto-definition)
+  ;; we need to "unset" to be able to make the same key-binding in python-mode
+  (define-key elpy-mode-map (kbd "C-c C-f") nil)
+  (setq elpy-rpc-python-command "python3")
+  (add-hook 'elpy-mode-hook
+            (lambda ()
+              (highlight-indentation-mode -1)))) ; Remove vertical line
+
+(setq python-shell-completion-native-enable nil)
+
+(with-eval-after-load 'python
+  (define-key python-mode-map (kbd "C-c C-f") 'python-black-format-buffer)
+  (define-key python-mode-map (kbd "C-c C-i") 'python-isort-format-region))
+
+(defun my/run-django-command ()
+  "Run a django command."
+  (interactive)
+  (let* ((python-bin (concat (getenv "VIRTUAL_ENV") "/bin/python"))
+         (manage-py-file (concat (my/project-root) "manage.py"))
+         (default-directory (my/project-root))
+         (raw-help (shell-command-to-string (concat python-bin " " manage-py-file " help")))
+         (splited-lines (split-string raw-help "\n"))
+         (options (seq-filter '(lambda (line) (cl-search "    " line)) splited-lines))
+         (selection (completing-read "Pick django command: " (mapcar 'string-trim options)))
+         (command (concat python-bin " " manage-py-file " " selection)))
+    (compile command)))
+#+END_SRC
+** TYPESCIRIPT
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package typescript-mode
+  :ensure t
+  :defer t
+  :config
+  (evil-leader/set-key-for-mode 'typescript-mode "d" 'dumb-jump-go))
+#+END_SRC
+** RUST
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+use-package rust-mode
+  :ensure t
+  :if (executable-find "rustc"))
+
+(use-package cargo
+  :ensure t
+  :if (executable-find "cargo")
+  :after rust-mode
+  :bind (:map cargo-minor-mode-map
+              ("C-c C-t" . cargo-process-test)
+              ("C-c C-b" . cargo-process-build)
+              ("C-c C-c" . cargo-process-run))
+  :config
+  (add-hook 'rust-mode-hook 'cargo-minor-mode))
+
+(use-package racer
+  :ensure t
+  :if (executable-find "racer")
+  :after rust-mode
+  :custom
+  (racer-rust-src-path "~/Code/rust/src/src")
+  :hook ((rust-mode . racer-mode)
+         (racer-mode . eldoc-mode)
+         (racer-mode . company-mode))
+  :config
+  (evil-leader/set-key-for-mode 'rust-mode "d" 'racer-find-definition))
+#+END_SRC
+
+* COMPLETION
+** IVY
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package ivy
 :config
 (ivy-mode 1))
 #+END_SRC
-
-* COUNSEL
+** COUNSEL
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package counsel
 :bind 
 ("C-x b" . 'counsel-switch-buffer)
 ("C-x C-f" . 'counsel-find-file))
 #+END_SRC
-* COMPANY
+** COMPANY
    #+BEGIN_SRC emacs-lisp :tangle ./init.el
    (use-package company
    :ensure t
@@ -363,7 +537,7 @@ this indenting is super annoying
    (define-key company-active-map (kbd "C-j") #'company-select-next)
    (define-key company-active-map (kbd "C-k") #'company-select-previous))
    #+END_SRC
-* COMPANY_IRONY
+** COMPANY_IRONY
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package company-irony
 :ensure t
@@ -372,117 +546,23 @@ this indenting is super annoying
 (add-to-list 'company-backends 'company-irony))
 #+END_SRC
 
-* COMPANY_HOOKS
+** COMPANY_HOOKS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (with-eval-after-load 'company
 (add-hook 'after-init-hook 'global-company-mode))
 #+END_SRC
-* IVY_RICH_ICONS
+** IVY_RICH_ICONS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
   (use-package all-the-icons-ivy-rich
   :init
 (all-the-icons-ivy-rich-mode 1))
 #+END_SRC
-* IVY_RICH
+** IVY_RICH
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package ivy-rich
   :after ivy
   :init
   (ivy-rich-mode 1))
-#+END_SRC
-
-* TREEMACS
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(use-package treemacs)
-(setq treemacs-resize-icons 19)
-(setq treemacs-indentation 1)
-(setq treemacs-width 25)
-(treemacs)
-#+END_SRC
-* LSP
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(use-package lsp-mode
-  :init
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-  (setq lsp-keymap-prefix "C-c l")
-  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-         (c-mode . lsp)
-         (c++-mode . lsp)
-         (python . lsp)
-         (c-mode . lsp)
-         (web-mode . lsp)
-         ;; if you want which-key integration
-         (lsp-mode . lsp-enable-which-key-integration))
-  :commands lsp)
-
-;; optionally
-(use-package lsp-ui :commands lsp-ui-mode)
-;; if you are ivy user
-(use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
-
-;; optionally if you want to use debugger
-(use-package dap-mode)
-;; (use-package dap-LANGUAGE) to load the dap adapter for your language
-
-  ;; enable log only for debug
-  (setq lsp-log-io nil)
-
- ;; use `evil-matchit' instead
-  (setq lsp-enable-folding nil)
-
-;; handle yasnippet by myself
-  (setq lsp-enable-snippet nil)
-
-  ;; auto restart lsp
-  (setq lsp-restart 'auto-restart)
-
-  ;; don't ping LSP lanaguage server too frequently
-  (defvar lsp-on-touch-time 0)
-  (defadvice lsp-on-change (around lsp-on-change-hack activate)
-    ;; don't run `lsp-on-change' too frequently
-    (when (> (- (float-time (current-time))
-                lsp-on-touch-time) 30) ;; 30 seconds
-      (setq lsp-on-touch-time (float-time (current-time)))
-      ad-do-it)))
-
-
-#+END_SRC
-* LATEX
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(use-package auctex
-  :ensure t
-  :defer t)
-
-(use-package latex-preview-pane
-  :ensure t
-  :defer t)
-#+END_SRC
-* MODES
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(use-package csharp-mode)
-(use-package haskell-mode)
-(use-package json-mode)
-(use-package sass-mode)
-
-(use-package slime)
-(setq inferior-lisp-program "sbcl")
-#+END_SRC
-** WEB_MODE
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(setq web-mode-markup-indent-offset 4)
-(setq web-mode-code-indent-offset 4)
-(setq web-mode-css-indent-offset 4)
-(use-package web-mode
-:mode (("\\.js\\'" . web-mode)
-("\\.jsx\\'" . web-mode)
-("\\.ts\\'" . web-mode)
-("\\.tsx\\'" . web-mode)
-("\\.html\\'" . web-mode))
-:commands web-mode)
-#+END_SRC
-** PRETTIER_JS
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(use-package prettier-js)
 #+END_SRC
 * MY_FUNCTIONS
 you may have to use (revert-buffer-with-coding-system 'utf-8)
@@ -694,6 +774,7 @@ you may have to use (revert-buffer-with-coding-system 'utf-8)
    (global-set-key (kbd "H-m") (lambda () (interactive) (shell-command "setxkbmap ru ")
 (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/Xmodmap")))
 #+END_SRC
+* GO_HOME
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (find-file "~/private/org/home.org")
 #+END_SRC

@@ -1,1 +1,1 @@
-muh personal laptop stuffs
+Emacs configuration files

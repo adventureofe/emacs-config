@@ -17,7 +17,8 @@ frog "Default Theme for frogmacs"
   (f-cyan        "#00ffff")
   (f-red         "#ff0000")
   (f-yellow      "#ffff00")
-  (f-inactive   "#205050")
+  (f-active      "#990000")
+  (f-inactive    "#102525")
   )
 
  ;; Customize faces
@@ -40,8 +41,8 @@ frog "Default Theme for frogmacs"
   (eshell-ls-backup        (:foreground f-white :background f-blue))
   (eshell-ls-executable   (:foreground f-magenta))
 
-  (mode-line-inactive (:foreground f-red :background f-inactive))
-  (mode-line (:foreground f-white :background f-red))
+  (mode-line-inactive (:foreground f-green :background f-inactive))
+  (mode-line (:foreground f-white :background f-active))
 
   (org-level-1 (:foreground f-white :background f-black-red))
   (org-level-2 (:foreground f-cyan :background f-black-blue))

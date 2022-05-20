@@ -438,14 +438,6 @@ this indenting is super annoying
 
   ;; don't ping LSP lanaguage server too frequently
   (defvar lsp-on-touch-time 0)
-  (defadvice lsp-on-change (around lsp-on-change-hack activate)
-    ;; don't run `lsp-on-change' too frequently
-    (when (> (- (float-time (current-time))
-                lsp-on-touch-time) 30) ;; 30 seconds
-      (setq lsp-on-touch-time (float-time (current-time)))
-      ad-do-it)))
-
-
 #+END_SRC
 * LATEX
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -458,14 +450,33 @@ this indenting is super annoying
   :defer t)
 #+END_SRC
 * MODES
+** C_SHARP
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package csharp-mode)
+#+END_SRC
+** CLOJURE
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package clojure-mode)
+(use-package cider)
+#+END_SRC
+** HASKELL
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package haskell-mode)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package json-mode)
 (use-package sass-mode)
-
+#+END_SRC
+** COMMON_LISP
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package slime)
 (setq inferior-lisp-program "sbcl")
+#+END_SRC
+
+** JSON
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package json-mode)
 #+END_SRC
 ** WEB_MODE
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -490,13 +501,25 @@ you may have to use (revert-buffer-with-coding-system 'utf-8)
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
    ;;Navigation functions (C-; C-n prefix)
    (global-set-key (kbd "C-; C-n c")(lambda()(interactive)(find-file "~/.emacs.d/frogmacs.org")))
-   (global-set-key (kbd "C-; C-n h")(lambda()(interactive)(find-file "~/private/org/home.org")))
-   (global-set-key (kbd "C-; C-n b")(lambda()(interactive)(find-file "~/private/org/books.org")))
-   (global-set-key (kbd "C-; C-n w")(lambda()(interactive)(find-file "~/private/org/words.org")))
-   (global-set-key (kbd "C-; C-n l")(lambda()(interactive)(find-file "~/private/org/language.org")))
-   (global-set-key (kbd "C-; C-n m")(lambda()(interactive)(find-file "~/private/org/math.org")))
-   (global-set-key (kbd "C-; C-n t")(lambda()(interactive)(find-file "~/private/org/tasks.org")))
-   (global-set-key (kbd "C-; C-n d")(lambda()(interactive)(find-file "~/private/org/drills.org")))
+   (global-set-key (kbd "C-; C-n h")(lambda()(interactive)(find-file "~/org/home.org")))
+   (global-set-key (kbd "C-; C-n b")(lambda()(interactive)(find-file "~/org/books.org")))
+   (global-set-key (kbd "C-; C-n l")(lambda()(interactive)(find-file "~/org/language.org")))
+   (global-set-key (kbd "C-; C-n m")(lambda()(interactive)(find-file "~/org/math.org")))
+   (global-set-key (kbd "C-; C-n i")(lambda()(interactive)(find-file "~/org/ideas.org")))
+   (global-set-key (kbd "C-; C-n p")(lambda()(interactive)(find-file "~/org/programming.org")))
+   (global-set-key (kbd "C-; C-n e")(lambda()(interactive)(find-file "~/org/electronics.org")))
+   (global-set-key (kbd "C-; C-n u")(lambda()(interactive)(find-file "~/org/unsorted.org")))
+   (global-set-key (kbd "C-; C-n j")(lambda()(interactive)(find-file "~/org/journal.org")))
+
+   ;; duplicate because I sometimes think w for word
+   (global-set-key (kbd "C-; C-n w")(lambda()(interactive)(find-file "~/org/language.org")))
+
+   ;; duplicate because I sometimes think d for diary
+   (global-set-key (kbd "C-; C-n d")(lambda()(interactive)(find-file "~/org/journal.org")))
+
+   ;; duplicate because I sometimes think y for youtube
+   (global-set-key (kbd "C-; C-n i")(lambda()(interactive)(find-file "~/org/ideas.org")))
+
 #+END_SRC
 ** FADA_LETTERS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -588,7 +611,7 @@ you may have to use (revert-buffer-with-coding-system 'utf-8)
     (insert "    printf(\"Hello, World!\\n\");\n")
     (insert "    return EXIT_SUCCESS;\n")
     (insert "}")
-    
+
     (save-buffer)
     (kill-buffer)
 
@@ -603,7 +626,7 @@ you may have to use (revert-buffer-with-coding-system 'utf-8)
 
     (insert "main.o: main.c\n")
     (insert "\t$(CC) -c $(CFLAGS) main.c\n\n")
-    
+
     (insert "clean:\n")
     (insert "\trm *.o " project-name)
     (save-buffer)
@@ -657,7 +680,7 @@ you may have to use (revert-buffer-with-coding-system 'utf-8)
     (insert "    std::cout << \"Hello, World!\\n\";\n")
     (insert "    return 0;\n")
     (insert "}")
-    
+
     (save-buffer)
     (kill-buffer)
 
@@ -672,7 +695,7 @@ you may have to use (revert-buffer-with-coding-system 'utf-8)
 
     (insert "main.o: main.cpp\n")
     (insert "\t$(CC) -c $(CFLAGS) main.cpp\n\n")
-    
+
     (insert "clean:\n")
     (insert "\trm *.o " project-name)
     (save-buffer)
@@ -694,6 +717,7 @@ you may have to use (revert-buffer-with-coding-system 'utf-8)
    (global-set-key (kbd "H-m") (lambda () (interactive) (shell-command "setxkbmap ru ")
 (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/Xmodmap")))
 #+END_SRC
+* GO_HOME
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-(find-file "~/private/org/home.org")
+(find-file "~/org/home.org")
 #+END_SRC

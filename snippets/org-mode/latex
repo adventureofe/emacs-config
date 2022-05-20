@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name:latex 
+# key:latex
+# --
+\begin{document}
+\Huge
+/(\frac{2}{2x \cdot 1} /)
+\end{document}

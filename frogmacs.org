@@ -116,7 +116,7 @@ stop emacs littering everywhere. Save often
 #+END_SRC
 ** FONT
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (set-face-attribute 'default nil :font "iosevka" :height 120)
+  (set-face-attribute 'default nil :font "Monaco" :height 100)
 #+END_SRC
 ** THEME
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -200,8 +200,6 @@ stop emacs littering everywhere. Save often
  eshell-mode-hook))
     (add-hook mode (lambda () (display-line-numbers-mode 0))))
 #+END_SRC
-
-
 ** NO_BLINKY_CURSOR
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
  (blink-cursor-mode 0)
@@ -210,8 +208,6 @@ stop emacs littering everywhere. Save often
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
   (global-prettify-symbols-mode t)
 #+END_SRC
-
-
 ** EMOJI_SUPPORT
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package unicode-fonts
@@ -470,7 +466,7 @@ you may have to use (revert-buffer-with-coding-system 'utf-8)
    (global-set-key (kbd "C-; C-n e")(lambda()(interactive)(find-file "~/org/electronics.org")))
    (global-set-key (kbd "C-; C-n u")(lambda()(interactive)(find-file "~/org/unsorted.org")))
    (global-set-key (kbd "C-; C-n j")(lambda()(interactive)(find-file "~/org/journal.org")))
-
+   (global-set-key (kbd "C-; C-n s")(lambda()(interactive)(find-file "~/org/shortcuts.org")))
    ;; duplicate because I sometimes think w for word
    (global-set-key (kbd "C-; C-n w")(lambda()(interactive)(find-file "~/org/language.org")))
 
@@ -681,3 +677,5 @@ you may have to use (revert-buffer-with-coding-system 'utf-8)
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (find-file "~/org/home.org")
 #+END_SRC
+
+

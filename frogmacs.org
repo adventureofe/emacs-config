@@ -4,56 +4,56 @@
 #+STARTUP: overview
 * PACKAGE_MANAGEMENT
 ** MELPA
-   We need melpa to install packages
+We need melpa to install packages
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (require 'package)
+(require 'package)
 
-  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-			   ("org" . "https://orgmode.org/elpa/")
-			   ("elpa" . "https://elpa.gnu.org/packages/")))
-  
-  (package-initialize)
-  (unless package-archive-contents
-    (package-refresh-contents))
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+			             ("org" . "https://orgmode.org/elpa/")
+			             ("elpa" . "https://elpa.gnu.org/packages/")))
+
+(package-initialize)
+(unless package-archive-contents
+  (package-refresh-contents))
 #+END_SRC
 ** USE_PACKAGE
    use-package allows us to manage packages much easier
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (unless (package-installed-p 'use-package)
-    (package-refresh-contents)
-    (package-install 'use-package))
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
 
-  (require 'use-package)
-  (require 'use-package-ensure)
-  (setq use-package-always-ensure t)
+(require 'use-package)
+(require 'use-package-ensure)
+(setq use-package-always-ensure t)
 #+END_SRC
 * FUNCTIONALITY
 ** PREFER_UTF_8
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (set-charset-priority 'unicode)
-  (prefer-coding-system       'utf-8)
-  (set-default-coding-systems 'utf-8)
-  (set-keyboard-coding-system 'utf-8)
-  (set-language-environment   'utf-8)
-  (set-terminal-coding-system 'utf-8)
-  (set-selection-coding-system 'utf-8)
-  (setq locale-coding-system  'utf-8)
-  (setq default-process-coding-system '(utf-8-unix . utf-8-unix))
+(set-charset-priority 'unicode)
+(prefer-coding-system       'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-language-environment   'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-selection-coding-system 'utf-8)
+(setq locale-coding-system  'utf-8)
+(setq default-process-coding-system '(utf-8-unix . utf-8-unix))
 ;; Treat clipboard input as UTF-8 string first; compound text next, etc.
 (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING))
 #+END_SRC
 ** DISABLE_BACKUPS
 stop emacs littering everywhere. Save often
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (setq make-backup-files nil)
+(setq make-backup-files nil)
 #+END_SRC
 ** DISABLE_LOCKFILES(FOR_REACT)
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-(setq create-lockfiles nil) 
+(setq create-lockfiles nil)
 #+END_SRC
 ** CONVSERVATIVE_SCROLLING
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (setq scroll-conservatively 100)
+(setq scroll-conservatively 100)
 #+END_SRC
 ** AVOID_CLOSING_EMACS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -66,20 +66,44 @@ stop emacs littering everywhere. Save often
 #+END_SRC
 * EXWM
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (defun efs/exwm-update-class ()
-    (exwm-workspace-rename-buffer exwm-class-name))
+(defun efs/run-in-background (command)
+  (let ((command-parts (split-string command "[ ]+")))
+    (apply #'call-process `(,(car command-parts) nil 0 nil ,@(cdr command-parts)))))
 
-    (use-package exwm
-      :config
-      (setq exwm-worksapce-number 3)
+(defun efs/exwm-init-hook()
+  ;; launch on background apps
+  (efs/start-panel)
+  (efs/run-in-background "dunst")
+  (efs/run-in-background "pasystray")
+  (efs/run-in-background "nm-applet"))
 
-      (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/Xmodmap")
+(defun efs/exwm-update-class ()
+  (exwm-workspace-rename-buffer exwm-class-name))
 
-      (require 'exwm-randr)
-      (exwm-randr-enable)
-      (start-process-shell-command "xrandr" nil "xrandr --output Virtual-1 --primary --mode 1920x1080 --pos 0x0 --rotate normal")
+(use-package exwm
+  :config
+  ;; default number of workspaces
+  (setq exwm-workspace-number 5)
 
-      (setq exwm-input-prefix-keys
+  ;; extra init hook configuartion for background programs
+  (add-hook 'exwm-init-hook #'efs/exwm-init-hook)
+
+  ;; When window "class" updates, use it to set the buffer name
+  (add-hook 'exwm-update-class-hook #'efs/exwm-update-class)
+
+  ;; set up bindings
+  (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/Xmodmap")
+
+  ;; screen resolution / dual screens
+  (require 'exwm-randr)
+  (exwm-randr-enable)
+  (start-process-shell-command "xrandr" nil "xrandr --output DVI-D-0 --mode 1920x1080 --pos 1920x0 --rotate normal --output HDMI-0 --mode 1920x1080 --pos 0x0 --rotate normal --output DP-0 --off --output DP-1 --off --output DVI-D-1 --off")
+
+  ;; set workspaces to different screens
+  (setq exwm-randr-workspace-monitor-plist '(2 "HDMI-0" 3 "HDMI-0"))
+
+  ;;added my language switch key here
+  (setq exwm-input-prefix-keys
 	    '(?\C-x
 	      ?\C-u
 	      ?\C-h
@@ -88,65 +112,486 @@ stop emacs littering everywhere. Save often
 	      ?\M-&
 	      ?\M-:
 	      ?\C-\M-j
-	      ?\C-\ ))
+	      ?\C-\ )) ;;ctrl+space
 
-      (define-key exwm-mode-map [?\C-q] 'exwm-input-send-next-key)
+  ;;ctrl + q will enable the next key to be sent directly
+  (define-key exwm-mode-map [?\C-q] 'exwm-input-send-next-key)
 
-      (setq exwm-input-global-keys
+  (setq exwm-input-global-keys
 	    `(
 	      ([?\s-r] . exwm-reset)
 
-	      ([?\s-&] . (lambda (command)
-			   (interactive (list (read-shell-command "$ ")))
-			   (start-process-shell-command command nil command)))))
+          ;; make button beside 1 an additional 0 workspace switch
+          ([?\s-`] . (lambda () (interactive) (exwm-workspace-switch-create 0)))
 
-      (exwm-enable))
+          ;; windows+shift+7 - open program
+	      ([?\s-&] . (lambda (command)
+			           (interactive (list (read-shell-command "$ ")))
+			           (start-process-shell-command command nil command)))
+
+          ;; switch to certain worksapce with super + a number 0-9
+          ,@(mapcar (lambda (i)
+                      `(, (kbd (format "s-%d" i)) .
+                          (lambda ()
+                            (interactive)
+                            (exwm-workspace-switch-create ,i))))
+                    (number-sequence 0 9))))
+
+  (exwm-enable))
+#+END_SRC
+* POLYBAR
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+;; Make sure the server is started (better to do this in your main Emacs config!)
+(server-start)
+
+(defvar efs/polybar-process nil
+  "Holds the process of the running Polybar instance, if any")
+
+(defun efs/kill-panel ()
+  (interactive)
+  (when efs/polybar-process
+    (ignore-errors
+      (kill-process efs/polybar-process)))
+  (setq efs/polybar-process nil))
+
+(defun efs/start-panel ()
+  (interactive)
+  (efs/kill-panel)
+  (setq efs/polybar-process (start-process-shell-command "polybar" nil "polybar panel")))
+
+(defun efs/send-polybar-hook (module-name hook-index)
+  (start-process-shell-command "polybar-msg" nil (format "polybar-msg hook %s %s" module-name hook-index)))
+
+(defun efs/send-polybar-exwm-workspace ()
+  (efs/send-polybar-hook "exwm-workspace" 1))
+
+;; Update panel indicator when workspace changes
+(add-hook 'exwm-workspace-switch-hook #'efs/send-polybar-exwm-workspace)
+#+END_SRC
+
+The configuration for our ingeniously named panel, "panel".  Invoke it with =polybar panel= on the command line!
+
+#+begin_src conf :tangle ~/.config/polybar/config :mkdirp yes
+; Docs: https://github.com/polybar/polybar
+;==========================================================
+
+[settings]
+screenchange-reload = true
+
+[global/wm]
+margin-top = 0
+margin-bottom = 0
+
+[colors]
+background = #f0232635
+background-alt = #576075
+foreground = #A6Accd
+foreground-alt = #555
+primary = #ffb52a
+secondary = #e60053
+alert = #bd2c40
+underline-1 = #c792ea
+
+[bar/panel]
+width = 100%
+height = 25
+offset-x = 0
+offset-y = 0
+fixed-center = true
+enable-ipc = true
+
+background = ${colors.background}
+foreground = ${colors.foreground}
+
+line-size = 2
+line-color = #f00
+
+border-size = 0
+border-color = #00000000
+
+padding-top = 5
+padding-left = 1
+padding-right = 1
+
+module-margin = 1
+
+font-0 = "Noto Sans Mono:size=9:weight=bold;2"
+font-1 = "Noto Sans Mono:size=7;2"
+font-2 = "Noto Sans Mono:size=10;5"
+font-3 = "Noto Sans Mono:size=8;-3"
+
+modules-left = exwm-workspace
+modules-right = cpu temperature battery date
+
+tray-position = right
+tray-padding = 2
+tray-maxsize = 28
+
+cursor-click = pointer
+cursor-scroll = ns-resize
+
+[module/exwm-workspace]
+type = custom/ipc
+hook-0 = emacsclient -e "exwm-workspace-current-index" | sed -e 's/^"//' -e 's/"$//'
+initial = 1
+format-underline = ${colors.underline-1}
+format-padding = 1
+
+[module/cpu]
+type = internal/cpu
+interval = 2
+format = <label> <ramp-coreload>
+format-underline = ${colors.underline-1}
+click-left = emacsclient -e "(proced)"
+label = %percentage:2%%
+ramp-coreload-spacing = 0
+ramp-coreload-0 = ▁
+ramp-coreload-0-foreground = ${colors.foreground-alt}
+ramp-coreload-1 = ▂
+ramp-coreload-2 = ▃
+ramp-coreload-3 = ▄
+ramp-coreload-4 = ▅
+ramp-coreload-5 = ▆
+ramp-coreload-6 = ▇
+
+[module/date]
+type = internal/date
+interval = 5
+
+date = "%a %b %e"
+date-alt = "%A %B %d %Y"
+
+time = %l:%M %p
+time-alt = %H:%M:%S
+
+format-prefix-foreground = ${colors.foreground-alt}
+format-underline = ${colors.underline-1}
+
+label = %date% %time%
+
+[module/battery]
+type = internal/battery
+battery = BAT0
+adapter = ADP1
+full-at = 98
+time-format = %-l:%M
+
+label-charging = %percentage%% / %time%
+format-charging = <animation-charging> <label-charging>
+format-charging-underline = ${colors.underline-1}
+
+label-discharging = %percentage%% / %time%
+format-discharging = <ramp-capacity> <label-discharging>
+format-discharging-underline = ${self.format-charging-underline}
+
+format-full = <ramp-capacity> <label-full>
+format-full-underline = ${self.format-charging-underline}
+
+ramp-capacity-0 = 
+ramp-capacity-1 = 
+ramp-capacity-2 = 
+ramp-capacity-3 = 
+ramp-capacity-4 = 
+
+animation-charging-0 = 
+animation-charging-1 = 
+animation-charging-2 = 
+animation-charging-3 = 
+animation-charging-4 = 
+animation-charging-framerate = 750
+
+[module/temperature]
+type = internal/temperature
+thermal-zone = 0
+warn-temperature = 60
+
+format = <label>
+format-underline = ${colors.underline-1}
+format-warn = <label-warn>
+format-warn-underline = ${self.format-underline}
+
+label = %temperature-c%
+label-warn = %temperature-c%!
+label-warn-foreground = ${colors.secondary}
+#+end_src
+* DUNST
+We use an application called [[https://dunst-project.org/][Dunst]] to enable the display of desktop notifications from Emacs and other applications running within EXWM.  Consult the [[https://dunst-project.org/documentation/][documentation]] for more details on how to configure this to your liking!
+
+Here are some things you might want to consider changing:
+
+- =format= - Customize how notification text contents are displayed
+- =geometry= - Where the notification appears and how large it should be by default
+- =urgency_normal=, etc - configures the background and frame color for notifications of different types
+- =max_icon_size= - Constrain icon display since some icons will be larger than others
+- =icon_path= - Important if your icons are not in a common location (like when using GNU Guix)
+- =idle_threshold= - Wait for user to become active for this long before hiding notifications
+- =mouse_left/right/middle_click= - Action to take when clicking a notification
+- Any of the key bindings in the =shortcuts= section (though these are deprecated in 1.5.0, use =dunstctl=)
+
+#+begin_src conf :tangle ~/.config/dunst/dunstrc :mkdirp yes
+[global]
+### Display ###
+monitor = 0
+
+# The geometry of the window:
+#   [{width}]x{height}[+/-{x}+/-{y}]
+geometry = "500x10-10+50"
+
+# Show how many messages are currently hidden (because of geometry).
+indicate_hidden = yes
+
+# Shrink window if it's smaller than the width.  Will be ignored if
+# width is 0.
+shrink = no
+
+# The transparency of the window.  Range: [0; 100].
+transparency = 10
+
+# The height of the entire notification.  If the height is smaller
+# than the font height and padding combined, it will be raised
+# to the font height and padding.
+notification_height = 0
+
+# Draw a line of "separator_height" pixel height between two
+# notifications.
+# Set to 0 to disable.
+separator_height = 1
+separator_color = frame
+
+# Padding between text and separator.
+padding = 8
+
+# Horizontal padding.
+horizontal_padding = 8
+
+# Defines width in pixels of frame around the notification window.
+# Set to 0 to disable.
+frame_width = 2
+
+# Defines color of the frame around the notification window.
+frame_color = "#89AAEB"
+
+# Sort messages by urgency.
+sort = yes
+
+# Don't remove messages, if the user is idle (no mouse or keyboard input)
+# for longer than idle_threshold seconds.
+idle_threshold = 120
+
+### Text ###
+
+font = Cantarell 20
+
+# The spacing between lines.  If the height is smaller than the
+# font height, it will get raised to the font height.
+line_height = 0
+markup = full
+
+# The format of the message.  Possible variables are:
+#   %a  appname
+#   %s  summary
+#   %b  body
+#   %i  iconname (including its path)
+#   %I  iconname (without its path)
+#   %p  progress value if set ([  0%] to [100%]) or nothing
+#   %n  progress value if set without any extra characters
+#   %%  Literal %
+# Markup is allowed
+format = "<b>%s</b>\n%b"
+
+# Alignment of message text.
+# Possible values are "left", "center" and "right".
+alignment = left
+
+# Show age of message if message is older than show_age_threshold
+# seconds.
+# Set to -1 to disable.
+show_age_threshold = 60
+
+# Split notifications into multiple lines if they don't fit into
+# geometry.
+word_wrap = yes
+
+# When word_wrap is set to no, specify where to make an ellipsis in long lines.
+# Possible values are "start", "middle" and "end".
+ellipsize = middle
+
+# Ignore newlines '\n' in notifications.
+ignore_newline = no
+
+# Stack together notifications with the same content
+stack_duplicates = true
+
+# Hide the count of stacked notifications with the same content
+hide_duplicate_count = false
+
+# Display indicators for URLs (U) and actions (A).
+show_indicators = yes
+
+### Icons ###
+
+# Align icons left/right/off
+icon_position = left
+
+# Scale larger icons down to this size, set to 0 to disable
+max_icon_size = 88
+
+# Paths to default icons.
+icon_path = /usr/share/icons/Adwaita/96x96/status:/usr/share/icons/Adwaita/96x96/emblems
+
+### History ###
+
+# Should a notification popped up from history be sticky or timeout
+# as if it would normally do.
+sticky_history = no
+
+# Maximum amount of notifications kept in history
+history_length = 20
+
+### Misc/Advanced ###
+
+# Browser for opening urls in context menu.
+browser = qutebrowser
+
+# Always run rule-defined scripts, even if the notification is suppressed
+always_run_script = true
+
+# Define the title of the windows spawned by dunst
+title = Dunst
+
+# Define the class of the windows spawned by dunst
+class = Dunst
+
+startup_notification = false
+verbosity = mesg
+
+# Define the corner radius of the notification window
+# in pixel size. If the radius is 0, you have no rounded
+# corners.
+# The radius will be automatically lowered if it exceeds half of the
+# notification height to avoid clipping text and/or icons.
+corner_radius = 4
+
+mouse_left_click = close_current
+mouse_middle_click = do_action
+mouse_right_click = close_all
+
+# Experimental features that may or may not work correctly. Do not expect them
+# to have a consistent behaviour across releases.
+[experimental]
+# Calculate the dpi to use on a per-monitor basis.
+# If this setting is enabled the Xft.dpi value will be ignored and instead
+# dunst will attempt to calculate an appropriate dpi value for each monitor
+# using the resolution and physical size. This might be useful in setups
+# where there are multiple screens with very different dpi values.
+per_monitor_dpi = false
+
+[shortcuts]
+
+# Shortcuts are specified as [modifier+][modifier+]...key
+# Available modifiers are "ctrl", "mod1" (the alt-key), "mod2",
+# "mod3" and "mod4" (windows-key).
+# Xev might be helpful to find names for keys.
+
+# Close notification.
+#close = ctrl+space
+
+# Close all notifications.
+#close_all = ctrl+shift+space
+
+# Redisplay last message(s).
+# On the US keyboard layout "grave" is normally above TAB and left
+# of "1". Make sure this key actually exists on your keyboard layout,
+# e.g. check output of 'xmodmap -pke'
+history = ctrl+grave
+
+# Context menu.
+context = ctrl+shift+period
+
+[urgency_low]
+# IMPORTANT: colors have to be defined in quotation marks.
+# Otherwise the "#" and following would be interpreted as a comment.
+background = "#222222"
+foreground = "#888888"
+timeout = 10
+# Icon for notifications with low urgency, uncomment to enable
+#icon = /path/to/icon
+
+[urgency_normal]
+background = "#1c1f26"
+foreground = "#ffffff"
+timeout = 10
+# Icon for notifications with normal urgency, uncomment to enable
+#icon = /path/to/icon
+
+[urgency_critical]
+background = "#900000"
+foreground = "#ffffff"
+frame_color = "#ff0000"
+timeout = 0
+# Icon for notifications with critical urgency, uncomment to enable
+#icon = /path/to/icon
+#+END_SRC
+We can also set up some functions for enabling and disabling notifications at any time:
+
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(defun efs/disable-desktop-notifications ()
+  (interactive)
+  (start-process-shell-command "notify-send" nil "notify-send \"DUNST_COMMAND_PAUSE\""))
+
+(defun efs/enable-desktop-notifications ()
+  (interactive)
+  (start-process-shell-command "notify-send" nil "notify-send \"DUNST_COMMAND_RESUME\""))
+
+(defun efs/toggle-desktop-notifications ()
+  (interactive)
+  (start-process-shell-command "notify-send" nil "notify-send \"DUNST_COMMAND_TOGGLE\""))
 #+END_SRC
 * VISUALS
 ** DISABLE_GUI_ELEMENTS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (setq inhibit-startup-message t)
-  (setq visible-bell t)
+(setq inhibit-startup-message t)
+(setq visible-bell t)
 
-  (scroll-bar-mode -1)
-  (tool-bar-mode -1)
-  (tooltip-mode -1)
-  (menu-bar-mode -1)
-  (set-window-scroll-bars (minibuffer-window) nil nil)
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
+(tooltip-mode -1)
+(menu-bar-mode -1)
+(set-window-scroll-bars (minibuffer-window) nil nil)
 #+END_SRC
 ** FONT
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (set-face-attribute 'default nil :font "Monaco" :height 100)
+(set-face-attribute 'default nil :font "Noto Sans Mono" :height 130)
 #+END_SRC
 ** THEME
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-    (use-package autothemer
-      :ensure t)
+(use-package autothemer
+  :ensure t)
 
-  (load-theme 'frog t)
+(load-theme 'frog t)
 #+END_SRC
 ** MODELINE
 *** DIMINISH
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (use-package diminish)
+(use-package diminish)
 #+END_SRC
 *** DOOM-MODELINE
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (use-package doom-modeline
-    :ensure t
-    :init (doom-modeline-mode  1)
-    :custom (
-    (doom-modeline-height 10)
-    (doom-modeline-buffer-encoding nil)
-    (doom-modeline-window-width-limit fill-column)
-    ))
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode  1)
+  :custom (
+           (doom-modeline-height 10)
+           (doom-modeline-buffer-encoding nil)
+           (doom-modeline-window-width-limit fill-column)
+           ))
 
 ;; default modeline stuff I don't want
 (setq display-time-default-load-average nil)
 #+END_SRC
 *** ALL-THE-ICONS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (use-package all-the-icons)
+(use-package all-the-icons)
 #+END_SRC
 *** DISPLAY_BATTERY
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -156,24 +601,20 @@ stop emacs littering everywhere. Save often
 *** LINE_NUMBERS
    line numbers are always useful
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (column-number-mode 0)
-  (global-display-line-numbers-mode t)
+(column-number-mode 0)
+(global-display-line-numbers-mode t)
 
-  ;; Disable line numbers for some modes
-  (dolist (mode '(org-mode-hook
- term-mode-hook
- shell-mode-hook
- treemacs-mode-hook
- eshell-mode-hook))
-    (add-hook mode (lambda () (display-line-numbers-mode 0))))
-#+END_SRC
-*** NO_BLINKY_CURSOR
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
- (blink-cursor-mode 0)
+;; Disable line numbers for some modes
+(dolist (mode '(org-mode-hook
+                term-mode-hook
+                shell-mode-hook
+                treemacs-mode-hook
+                eshell-mode-hook))
+  (add-hook mode (lambda () (display-line-numbers-mode 0))))
 #+END_SRC
 *** FANCY_LAMBDAS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (global-prettify-symbols-mode t)
+(global-prettify-symbols-mode t)
 #+END_SRC
 *** TRAILING_WHITE_SPACE
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -189,24 +630,24 @@ stop emacs littering everywhere. Save often
 ** LINE_NUMBERS
    line numbers are always useful
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (column-number-mode 0)
-  (global-display-line-numbers-mode t)
+(column-number-mode 0)
+(global-display-line-numbers-mode t)
 
-  ;; Disable line numbers for some modes
-  (dolist (mode '(org-mode-hook
- term-mode-hook
- shell-mode-hook
- treemacs-mode-hook
- eshell-mode-hook))
-    (add-hook mode (lambda () (display-line-numbers-mode 0))))
+;; Disable line numbers for some modes
+(dolist (mode '(org-mode-hook
+                term-mode-hook
+                shell-mode-hook
+                treemacs-mode-hook
+                eshell-mode-hook))
+  (add-hook mode (lambda () (display-line-numbers-mode 0))))
 #+END_SRC
 ** NO_BLINKY_CURSOR
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
- (blink-cursor-mode 0)
+(blink-cursor-mode 0)
 #+END_SRC
 ** FANCY_LAMBDAS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (global-prettify-symbols-mode t)
+(global-prettify-symbols-mode t)
 #+END_SRC
 ** EMOJI_SUPPORT
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -215,10 +656,9 @@ stop emacs littering everywhere. Save often
   :config
   (unicode-fonts-setup))
 #+END_SRC
-
 * EMACS_SERVER
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (server-start)
+(server-start)
 #+END_SRC
 * COMPANY
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -226,18 +666,19 @@ stop emacs littering everywhere. Save often
 #+END_SRC
 * YASNIPPET
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (use-package yasnippet)
-  (yas-global-mode 1)
+(use-package yasnippet)
+(yas-global-mode 1)
 #+END_SRC
 * ORG
 ** ORG_MODE
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (use-package org
+(use-package org
   :pin org
   :commands (org-capture org-agenda)
   :config
 
- (setq org-ellipsis " ▾")
+  (setq org-ellipsis " ▾")
+  (setq org-src-tab-acts-natively t)
 
   (setq org-agenda-start-with-log-mode t)
   (setq org-log-done 'time)
@@ -253,14 +694,14 @@ stop emacs littering everywhere. Save often
 
   (define-key global-map (kbd "C-c j")
     (lambda () (interactive) (org-capture nil "jj")))
-)
+  )
 #+END_SRC
 ** ORG_BULLETS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (use-package org-bullets
-    :ensure t
-    :init
-    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+(use-package org-bullets
+  :ensure t
+  :init
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 #+END_SRC
 ** ORG_INDENT
 this indenting is super annoying
@@ -273,33 +714,32 @@ this indenting is super annoying
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package org-drill)
 #+END_SRC
-
 * EVIL
 ** EVIL_MODE
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-    (use-package evil
-      :init
-      (setq evil-want-abbrev-expand-on-insert-exit nil
-            evil-want-keybinding nil)
+(use-package evil
+  :init
+  (setq evil-want-abbrev-expand-on-insert-exit nil
+        evil-want-keybinding nil)
 
-      :config
-      (evil-mode 1)
-    (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+  :config
+  (evil-mode 1)
+  (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
   ;; Use visual line motions even outside of visual-line-mode buffers
-    (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-    (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
 
-;; allow keys to work in russian keyboard
-    (evil-global-set-key 'motion "о" 'evil-next-visual-line)
-    (evil-global-set-key 'motion "л" 'evil-previous-visual-line)
-    (evil-global-set-key 'motion "д" 'evil-forward-char)
-    (evil-global-set-key 'motion "р" 'evil-backward-char)
+  ;; allow keys to work in russian keyboard
+  (evil-global-set-key 'motion "о" 'evil-next-visual-line)
+  (evil-global-set-key 'motion "л" 'evil-previous-visual-line)
+  (evil-global-set-key 'motion "д" 'evil-forward-char)
+  (evil-global-set-key 'motion "р" 'evil-backward-char)
 
-    (define-key evil-insert-state-map (kbd "C-п") 'evil-normal-state)
-    (evil-global-set-key 'motion "ш" 'evil-insert)
-)
+  (define-key evil-insert-state-map (kbd "C-п") 'evil-normal-state)
+  (evil-global-set-key 'motion "ш" 'evil-insert)
+  )
 
-    (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 #+END_SRC
 ** EVIL_COLLECTION
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -330,16 +770,15 @@ this indenting is super annoying
 * WHICH KEY
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package which-key
-    :config
-    (which-key-mode))
+  :config
+  (which-key-mode))
 #+END_SRC
 * IVY
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package ivy
-:config
-(ivy-mode 1))
+  :config
+  (ivy-mode 1))
 #+END_SRC
-
 * COUNSEL
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package counsel
@@ -348,36 +787,35 @@ this indenting is super annoying
 ("C-x C-f" . 'counsel-find-file))
 #+END_SRC
 * COMPANY
-   #+BEGIN_SRC emacs-lisp :tangle ./init.el
-   (use-package company
-   :ensure t
-   :config
-   (setq company-idle-delay 0)
-   (setq company-minimum-prefix-length 3))
+#+BEGIN_SRC emacs-lisp :tangle ./init.el
+(use-package company
+  :ensure t
+  :config
+  (setq company-idle-delay 0)
+  (setq company-minimum-prefix-length 3))
 
-   (with-eval-after-load 'company
-   (define-key company-active-map (kbd "C-j") #'company-select-next)
-   (define-key company-active-map (kbd "C-k") #'company-select-previous))
-   #+END_SRC
+(with-eval-after-load 'company
+  (define-key company-active-map (kbd "C-j") #'company-select-next)
+  (define-key company-active-map (kbd "C-k") #'company-select-previous))
+#+END_SRC
 * COMPANY_IRONY
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package company-irony
-:ensure t
-:config
-(require 'company)
-(add-to-list 'company-backends 'company-irony))
+  :ensure t
+  :config
+  (require 'company)
+  (add-to-list 'company-backends 'company-irony))
 #+END_SRC
-
 * COMPANY_HOOKS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (with-eval-after-load 'company
-(add-hook 'after-init-hook 'global-company-mode))
+  (add-hook 'after-init-hook 'global-company-mode))
 #+END_SRC
 * IVY_RICH_ICONS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-  (use-package all-the-icons-ivy-rich
+(use-package all-the-icons-ivy-rich
   :init
-(all-the-icons-ivy-rich-mode 1))
+  (all-the-icons-ivy-rich-mode 1))
 #+END_SRC
 * IVY_RICH
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -385,15 +823,6 @@ this indenting is super annoying
   :after ivy
   :init
   (ivy-rich-mode 1))
-#+END_SRC
-
-* TREEMACS
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(use-package treemacs)
-(setq treemacs-resize-icons 19)
-(setq treemacs-indentation 1)
-(setq treemacs-width 25)
-(treemacs)
 #+END_SRC
 * LATEX
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -429,7 +858,6 @@ this indenting is super annoying
 (use-package slime)
 (setq inferior-lisp-program "sbcl")
 #+END_SRC
-
 ** JSON
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (use-package json-mode)
@@ -439,13 +867,14 @@ this indenting is super annoying
 (setq web-mode-markup-indent-offset 4)
 (setq web-mode-code-indent-offset 4)
 (setq web-mode-css-indent-offset 4)
+
 (use-package web-mode
-:mode (("\\.js\\'" . web-mode)
-("\\.jsx\\'" . web-mode)
-("\\.ts\\'" . web-mode)
-("\\.tsx\\'" . web-mode)
-("\\.html\\'" . web-mode))
-:commands web-mode)
+  :mode (("\\.js\\'" . web-mode)
+         ("\\.jsx\\'" . web-mode)
+         ("\\.ts\\'" . web-mode)
+         ("\\.tsx\\'" . web-mode)
+         ("\\.html\\'" . web-mode))
+  :commands web-mode)
 #+END_SRC
 ** PRETTIER_JS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
@@ -455,223 +884,227 @@ this indenting is super annoying
 you may have to use (revert-buffer-with-coding-system 'utf-8)
 ** NAVIGATION
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-   ;;Navigation functions (C-; C-n prefix)
-   (global-set-key (kbd "C-; C-n c")(lambda()(interactive)(find-file "~/.emacs.d/frogmacs.org")))
-   (global-set-key (kbd "C-; C-n h")(lambda()(interactive)(find-file "~/org/home.org")))
-   (global-set-key (kbd "C-; C-n b")(lambda()(interactive)(find-file "~/org/books.org")))
-   (global-set-key (kbd "C-; C-n l")(lambda()(interactive)(find-file "~/org/language.org")))
-   (global-set-key (kbd "C-; C-n m")(lambda()(interactive)(find-file "~/org/math.org")))
-   (global-set-key (kbd "C-; C-n i")(lambda()(interactive)(find-file "~/org/ideas.org")))
-   (global-set-key (kbd "C-; C-n p")(lambda()(interactive)(find-file "~/org/programming.org")))
-   (global-set-key (kbd "C-; C-n e")(lambda()(interactive)(find-file "~/org/electronics.org")))
-   (global-set-key (kbd "C-; C-n u")(lambda()(interactive)(find-file "~/org/unsorted.org")))
-   (global-set-key (kbd "C-; C-n j")(lambda()(interactive)(find-file "~/org/journal.org")))
-   (global-set-key (kbd "C-; C-n s")(lambda()(interactive)(find-file "~/org/shortcuts.org")))
-   ;; duplicate because I sometimes think w for word
-   (global-set-key (kbd "C-; C-n w")(lambda()(interactive)(find-file "~/org/language.org")))
+;;Navigation functions (C-; C-n prefix)
+(global-set-key (kbd "C-; C-n c")(lambda()(interactive)(find-file "~/.emacs.d/frogmacs.org")))
+(global-set-key (kbd "C-; C-n h")(lambda()(interactive)(find-file "~/org/home.org")))
+(global-set-key (kbd "C-; C-n b")(lambda()(interactive)(find-file "~/org/books.org")))
+(global-set-key (kbd "C-; C-n l")(lambda()(interactive)(find-file "~/org/language.org")))
+(global-set-key (kbd "C-; C-n m")(lambda()(interactive)(find-file "~/org/math.org")))
+(global-set-key (kbd "C-; C-n i")(lambda()(interactive)(find-file "~/org/ideas.org")))
+(global-set-key (kbd "C-; C-n p")(lambda()(interactive)(find-file "~/org/programming.org")))
+(global-set-key (kbd "C-; C-n e")(lambda()(interactive)(find-file "~/org/electronics.org")))
+(global-set-key (kbd "C-; C-n u")(lambda()(interactive)(find-file "~/org/unsorted.org")))
+(global-set-key (kbd "C-; C-n j")(lambda()(interactive)(find-file "~/org/journal.org")))
+(global-set-key (kbd "C-; C-n s")(lambda()(interactive)(find-file "~/org/shortcuts.org")))
+;; duplicate because I sometimes think w for word
+(global-set-key (kbd "C-; C-n w")(lambda()(interactive)(find-file "~/org/language.org")))
 
-   ;; duplicate because I sometimes think d for diary
-   (global-set-key (kbd "C-; C-n d")(lambda()(interactive)(find-file "~/org/journal.org")))
+;; duplicate because I sometimes think d for diary
+(global-set-key (kbd "C-; C-n d")(lambda()(interactive)(find-file "~/org/journal.org")))
 
-   ;; duplicate because I sometimes think y for youtube
-   (global-set-key (kbd "C-; C-n i")(lambda()(interactive)(find-file "~/org/ideas.org")))
+;; duplicate because I sometimes think y for youtube
+(global-set-key (kbd "C-; C-n i")(lambda()(interactive)(find-file "~/org/ideas.org")))
 
 #+END_SRC
 ** FADA_LETTERS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-   ;;fada functions (C-; C-f prefix)
-   ;;i'll also include additional letters
-   ;; (Yasnippet doesn't seem to vibe well with pressing tab inside an org table)
-   (global-set-key (kbd "C-; C-f a")(lambda()(interactive)(insert "á")))
-   (global-set-key (kbd "C-; C-f e")(lambda()(interactive)(insert "é")))
-   (global-set-key (kbd "C-; C-f i")(lambda()(interactive)(insert "í")))
-   (global-set-key (kbd "C-; C-f o")(lambda()(interactive)(insert "ó")))
-   (global-set-key (kbd "C-; C-f u")(lambda()(interactive)(insert "ú")))
+;;fada functions (C-; C-f prefix)
+;;i'll also include additional letters
+;; (Yasnippet doesn't seem to vibe well with pressing tab inside an org table)
+(global-set-key (kbd "C-; C-f a")(lambda()(interactive)(insert "á")))
+(global-set-key (kbd "C-; C-f e")(lambda()(interactive)(insert "é")))
+(global-set-key (kbd "C-; C-f i")(lambda()(interactive)(insert "í")))
+(global-set-key (kbd "C-; C-f o")(lambda()(interactive)(insert "ó")))
+(global-set-key (kbd "C-; C-f u")(lambda()(interactive)(insert "ú")))
 
-   (global-set-key (kbd "C-; C-f A")(lambda()(interactive)(insert "Á")))
-   (global-set-key (kbd "C-; C-f E")(lambda()(interactive)(insert "É")))
-   (global-set-key (kbd "C-; C-f I")(lambda()(interactive)(insert "Í")))
-   (global-set-key (kbd "C-; C-f O")(lambda()(interactive)(insert "Ó")))
-   (global-set-key (kbd "C-; C-f U")(lambda()(interactive)(insert "Ú")))
+(global-set-key (kbd "C-; C-f A")(lambda()(interactive)(insert "Á")))
+(global-set-key (kbd "C-; C-f E")(lambda()(interactive)(insert "É")))
+(global-set-key (kbd "C-; C-f I")(lambda()(interactive)(insert "Í")))
+(global-set-key (kbd "C-; C-f O")(lambda()(interactive)(insert "Ó")))
+(global-set-key (kbd "C-; C-f U")(lambda()(interactive)(insert "Ú")))
 #+END_SRC
 ** JAPANESE_LETTERS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-   ;;japanese functions
-   (global-set-key (kbd "C-; C-j a")(lambda()(interactive)(insert "あ")))
-   (global-set-key (kbd "C-; C-j i")(lambda()(interactive)(insert "い")))
-   (global-set-key (kbd "C-; C-j u")(lambda()(interactive)(insert "う")))
-   (global-set-key (kbd "C-; C-j e")(lambda()(interactive)(insert "え")))
-   (global-set-key (kbd "C-; C-j o")(lambda()(interactive)(insert "お")))
+;;japanese functions
+(global-set-key (kbd "C-; C-j a")(lambda()(interactive)(insert "あ")))
+(global-set-key (kbd "C-; C-j i")(lambda()(interactive)(insert "い")))
+(global-set-key (kbd "C-; C-j u")(lambda()(interactive)(insert "う")))
+(global-set-key (kbd "C-; C-j e")(lambda()(interactive)(insert "え")))
+(global-set-key (kbd "C-; C-j o")(lambda()(interactive)(insert "お")))
 
-   (global-set-key (kbd "C-; C-j k a")(lambda()(interactive)(insert "か")))
-   (global-set-key (kbd "C-; C-j k i")(lambda()(interactive)(insert "き")))
-   (global-set-key (kbd "C-; C-j k u")(lambda()(interactive)(insert "く")))
-   (global-set-key (kbd "C-; C-j k e")(lambda()(interactive)(insert "け")))
-   (global-set-key (kbd "C-; C-j k o")(lambda()(interactive)(insert "こ")))
+(global-set-key (kbd "C-; C-j k a")(lambda()(interactive)(insert "か")))
+(global-set-key (kbd "C-; C-j k i")(lambda()(interactive)(insert "き")))
+(global-set-key (kbd "C-; C-j k u")(lambda()(interactive)(insert "く")))
+(global-set-key (kbd "C-; C-j k e")(lambda()(interactive)(insert "け")))
+(global-set-key (kbd "C-; C-j k o")(lambda()(interactive)(insert "こ")))
 
-   (global-set-key (kbd "C-; C-j s a")(lambda()(interactive)(insert "さ")))
-   (global-set-key (kbd "C-; C-j s i")(lambda()(interactive)(insert "し")))
-   (global-set-key (kbd "C-; C-j s h")(lambda()(interactive)(insert "し")))
-   (global-set-key (kbd "C-; C-j s u")(lambda()(interactive)(insert "す")))
-   (global-set-key (kbd "C-; C-j s e")(lambda()(interactive)(insert "せ")))
-   (global-set-key (kbd "C-; C-j s o")(lambda()(interactive)(insert "そ")))
+(global-set-key (kbd "C-; C-j s a")(lambda()(interactive)(insert "さ")))
+(global-set-key (kbd "C-; C-j s i")(lambda()(interactive)(insert "し")))
+(global-set-key (kbd "C-; C-j s h")(lambda()(interactive)(insert "し")))
+(global-set-key (kbd "C-; C-j s u")(lambda()(interactive)(insert "す")))
+(global-set-key (kbd "C-; C-j s e")(lambda()(interactive)(insert "せ")))
+(global-set-key (kbd "C-; C-j s o")(lambda()(interactive)(insert "そ")))
 
-   (global-set-key (kbd "C-; C-f N")(lambda()(interactive)(insert "Ñ")))
-   (global-set-key (kbd "C-; C-f n")(lambda()(interactive)(insert "ñ")))
-   (global-set-key (kbd "C-; C-f b")(lambda()(interactive)(insert "ß")))
-   (global-set-key (kbd "C-; C-f B")(lambda()(interactive)(insert "ß")))
+(global-set-key (kbd "C-; C-f N")(lambda()(interactive)(insert "Ñ")))
+(global-set-key (kbd "C-; C-f n")(lambda()(interactive)(insert "ñ")))
+(global-set-key (kbd "C-; C-f b")(lambda()(interactive)(insert "ß")))
+(global-set-key (kbd "C-; C-f B")(lambda()(interactive)(insert "ß")))
 #+END_SRC
 ** PROJECT_GENERATION
 *** C
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (defun c-gen () 
-    (interactive)
-     ;; get file name
-    (setq project-name (read-string "enter project name: "))
+  (interactive)
+  ;; get file name
+  (setq project-name (read-string "enter project name: "))
 
-    ;; make directories
-    (make-directory project-name)
-    (make-directory (concat project-name "/src"))
-    (make-directory (concat project-name "/headers"))
+  ;; make directories
+  (make-directory project-name)
+  (make-directory (concat project-name "/src"))
+  (make-directory (concat project-name "/headers"))
 
-    ;; generate readme
-    (find-file (concat project-name "/readme.org"))
-    (insert  "* " project-name "\n")
-    (insert "By theadventureofe(John Gormley)\n")
-    (insert "project description\n")
-    (insert "the_adventure_of_e λ")
-    (save-buffer)
-    (kill-buffer)
+  ;; generate readme
+  (find-file (concat project-name "/readme.org"))
+  (insert  "* " project-name "\n")
+  (insert "By theadventureofe(John Gormley)\n")
+  (insert "project description\n")
+  (insert "the_adventure_of_e λ")
+  (save-buffer)
+  (kill-buffer)
 
-    ;; generate main.c
-    (find-file (concat project-name "/main.c"))
+  ;; generate main.c
+  (find-file (concat project-name "/main.c"))
 
-    (insert "/*\n    " project-name "\n")
-    (insert "    By theadventureofe(John Gormley)\n")
-    (insert "    project description\n")
-    (insert "    the_adventure_of_e λ*/\n\n")
+  (insert "/*\n    " project-name "\n")
+  (insert "    By theadventureofe(John Gormley)\n")
+  (insert "    project description\n")
+  (insert "    the_adventure_of_e λ*/\n\n")
 
-    (insert "#include <stdlib.h>\n")
-    (insert "#include <stdio.h>\n\n")
+  (insert "#include <stdlib.h>\n")
+  (insert "#include <stdio.h>\n\n")
 
-    (insert "// print all included cmd args (removes compiler warning)\n")
-    (insert "void arg_print(int argc, char** argv)\n")
-    (insert "{\n")
-    (insert "    for(int i = 1; i < argc; i++)\n")
-    (insert "        printf(\"arg[%d]: %s\", i, argv[i]);\n")
-    (insert "}\n\n")
+  (insert "// print all included cmd args (removes compiler warning)\n")
+  (insert "void arg_print(int argc, char** argv)\n")
+  (insert "{\n")
+  (insert "    for(int i = 1; i < argc; i++)\n")
+  (insert "        printf(\"arg[%d]: %s\", i, argv[i]);\n")
+  (insert "}\n\n")
 
-    (insert "int main (int argc, char** argv)\n")
-    (insert "{\n")
-    (insert "    arg_print(argc, argv);\n")
-    (insert "    printf(\"Hello, World!\\n\");\n")
-    (insert "    return EXIT_SUCCESS;\n")
-    (insert "}")
+  (insert "int main (int argc, char** argv)\n")
+  (insert "{\n")
+  (insert "    arg_print(argc, argv);\n")
+  (insert "    printf(\"Hello, World!\\n\");\n")
+  (insert "    return EXIT_SUCCESS;\n")
+  (insert "}")
 
-    (save-buffer)
-    (kill-buffer)
+  (save-buffer)
+  (kill-buffer)
 
-    ;; generate makefile
-    (find-file (concat project-name "/Makefile"))
-    (insert "CC = clang\n")
-    (insert "CFLAGS = -Wall -Wextra -pedantic\n")
-    (insert "EXEC = " project-name "\n\n")
+  ;; generate makefile
+  (find-file (concat project-name "/Makefile"))
+  (insert "CC = clang\n")
+  (insert "CFLAGS = -Wall -Wextra -pedantic\n")
+  (insert "EXEC = " project-name "\n\n")
 
-    (insert "output: main.o\n")
-    (insert "\t$(CC) $(CFLAGS) main.o -o $(EXEC)\n\n")
+  (insert "output: main.o\n")
+  (insert "\t$(CC) $(CFLAGS) main.o -o $(EXEC)\n\n")
 
-    (insert "main.o: main.c\n")
-    (insert "\t$(CC) -c $(CFLAGS) main.c\n\n")
+  (insert "main.o: main.c\n")
+  (insert "\t$(CC) -c $(CFLAGS) main.c\n\n")
 
-    (insert "clean:\n")
-    (insert "\trm *.o " project-name)
-    (save-buffer)
-    (kill-buffer)
-)
+  (insert "clean:\n")
+  (insert "\trm *.o " project-name)
+  (save-buffer)
+  (kill-buffer)
+  )
 #+END_SRC
 *** C++
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (defun cpp-gen () 
-    (interactive)
-     ;; get file name
-    (setq project-name (read-string "enter project name: "))
+  (interactive)
+  ;; get file name
+  (setq project-name (read-string "enter project name: "))
 
-    ;; make directories
-    (make-directory project-name)
-    (make-directory (concat project-name "/src"))
-    (make-directory (concat project-name "/headers"))
+  ;; make directories
+  (make-directory project-name)
+  (make-directory (concat project-name "/src"))
+  (make-directory (concat project-name "/headers"))
 
-    ;; generate readme
-    (find-file (concat project-name "/readme.org"))
-    (insert  "* " project-name "\n")
-    (insert "By theadventureofe(John Gormley)\n")
-    (insert "project description\n")
-    (insert "the_adventure_of_e λ")
-    (save-buffer)
-    (kill-buffer)
+  ;; generate readme
+  (find-file (concat project-name "/readme.org"))
+  (insert  "* " project-name "\n")
+  (insert "By theadventureofe(John Gormley)\n")
+  (insert "project description\n")
+  (insert "the_adventure_of_e λ")
+  (save-buffer)
+  (kill-buffer)
 
-    ;; generate main.c
-    (find-file (concat project-name "/main.cpp"))
+  ;; generate main.c
+  (find-file (concat project-name "/main.cpp"))
 
-    (insert "/*\n    " project-name "\n")
-    (insert "    By theadventureofe(John Gormley)\n")
-    (insert "    project description\n")
-    (insert "    the_adventure_of_e λ*/\n\n")
+  (insert "/*\n    " project-name "\n")
+  (insert "    By theadventureofe(John Gormley)\n")
+  (insert "    project description\n")
+  (insert "    the_adventure_of_e λ*/\n\n")
 
-    (insert "#include <iostream>\n")
-    (insert "#include <vector>\n")
-    (insert "#include <memory>\n")
-    (insert "#include <map>\n\n")
+  (insert "#include <iostream>\n")
+  (insert "#include <vector>\n")
+  (insert "#include <memory>\n")
+  (insert "#include <map>\n\n")
 
-    (insert "// print all included cmd args (removes compiler warning)\n")
-    (insert "void arg_print(int argc, char** argv)\n")
-    (insert "{\n")
-    (insert "    for(int i = 1; i < argc; i++)\n")
-    (insert "        printf(\"arg[%d]: %s\", i, argv[i]);\n")
-    (insert "}\n\n")
+  (insert "// print all included cmd args (removes compiler warning)\n")
+  (insert "void arg_print(int argc, char** argv)\n")
+  (insert "{\n")
+  (insert "    for(int i = 1; i < argc; i++)\n")
+  (insert "        printf(\"arg[%d]: %s\", i, argv[i]);\n")
+  (insert "}\n\n")
 
-    (insert "int main (int argc, char** argv)\n")
-    (insert "{\n")
-    (insert "    arg_print(argc, argv);\n")
-    (insert "    std::cout << \"Hello, World!\\n\";\n")
-    (insert "    return 0;\n")
-    (insert "}")
+  (insert "int main (int argc, char** argv)\n")
+  (insert "{\n")
+  (insert "    arg_print(argc, argv);\n")
+  (insert "    std::cout << \"Hello, World!\\n\";\n")
+  (insert "    return 0;\n")
+  (insert "}")
 
-    (save-buffer)
-    (kill-buffer)
+  (save-buffer)
+  (kill-buffer)
 
-    ;; generate makefile
-    (find-file (concat project-name "/Makefile"))
-    (insert "CC = clang++\n")
-    (insert "CFLAGS = -Wall -Wextra -pedantic\n")
-    (insert "EXEC = " project-name "\n\n")
+  ;; generate makefile
+  (find-file (concat project-name "/Makefile"))
+  (insert "CC = clang++\n")
+  (insert "CFLAGS = -Wall -Wextra -pedantic\n")
+  (insert "EXEC = " project-name "\n\n")
 
-    (insert "output: main.o\n")
-    (insert "\t$(CC) $(CFLAGS) main.o -o $(EXEC)\n\n")
+  (insert "output: main.o\n")
+  (insert "\t$(CC) $(CFLAGS) main.o -o $(EXEC)\n\n")
 
-    (insert "main.o: main.cpp\n")
-    (insert "\t$(CC) -c $(CFLAGS) main.cpp\n\n")
+  (insert "main.o: main.cpp\n")
+  (insert "\t$(CC) -c $(CFLAGS) main.cpp\n\n")
 
-    (insert "clean:\n")
-    (insert "\trm *.o " project-name)
-    (save-buffer)
-    (kill-buffer)
-)
+  (insert "clean:\n")
+  (insert "\trm *.o " project-name)
+  (save-buffer)
+  (kill-buffer)
+  )
 #+END_SRC
 ** MISC_HYPER_FUNCTIONS
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
-   ;; useful functions with hyper key
-   (global-set-key (kbd "H-t") 'org-babel-tangle)
-   (global-set-key (kbd "H-e") 'eshell)
-   (global-set-key (kbd "H-u") 'upcase-word)
-   (global-set-key (kbd "H-w") 'eval-last-sexp)
-   (global-set-key (kbd "H-p") 'org-latex-preview)
+;; useful functions with hyper key
+(global-set-key (kbd "H-t") 'org-babel-tangle)
+(global-set-key (kbd "H-e") 'eshell)
+(global-set-key (kbd "H-u") 'upcase-word)
+(global-set-key (kbd "H-w") 'eval-last-sexp)
+(global-set-key (kbd "H-p") 'org-latex-preview)
 
-   (global-set-key (kbd "H-ь") (lambda () (interactive) (shell-command "setxkbmap gb ")
-(start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/Xmodmap")))
+(global-set-key (kbd "H-ь") (lambda () (interactive) (shell-command "setxkbmap gb ")
+                              (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/Xmodmap")))
 
-   (global-set-key (kbd "H-m") (lambda () (interactive) (shell-command "setxkbmap ru ")
-(start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/Xmodmap")))
+(global-set-key (kbd "H-m") (lambda () (interactive) (shell-command "setxkbmap ru ")
+                              (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/Xmodmap")))
+
+;; make it easier to switch context in russian keyboard mode
+(global-set-key (kbd "H-щ") 'other-window)
+(global-set-key (kbd "C-щ") 'other-window)
 #+END_SRC
 * GO_HOME
 #+BEGIN_SRC emacs-lisp :tangle ./init.el

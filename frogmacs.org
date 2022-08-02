@@ -215,10 +215,10 @@ padding-right = 1
 
 module-margin = 1
 
-font-0 = "Noto Sans Mono:size=9:weight=bold;2"
-font-1 = "Noto Sans Mono:size=7;2"
-font-2 = "Noto Sans Mono:size=10;5"
-font-3 = "Noto Sans Mono:size=8;-3"
+;;font-0 = "Noto Sans Mono:size=9:weight=bold;2"
+;;font-1 = "Noto Sans Mono:size=7;2"
+;;font-2 = "Noto Sans Mono:size=10;5"
+;;font-3 = "Noto Sans Mono:size=8;-3"
 
 modules-left = exwm-workspace
 modules-right = cpu temperature battery date
@@ -619,13 +619,6 @@ We can also set up some functions for enabling and disabling notifications at an
 *** TRAILING_WHITE_SPACE
 #+BEGIN_SRC emacs-lisp :tangle ./init.el
 (setq-default show-trailing-whitespace t)
-#+END_SRC
-*** EMOJI_SUPPORT
-#+BEGIN_SRC emacs-lisp :tangle ./init.el
-(use-package unicode-fonts
-  :ensure t
-  :config
-  (unicode-fonts-setup))
 #+END_SRC
 ** LINE_NUMBERS
    line numbers are always useful
